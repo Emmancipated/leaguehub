@@ -144,8 +144,12 @@ Prisma Console's "import repository" feature requires Prisma 8 — a breaking up
    - **Vercel Postgres** (first-party) — create one from the Vercel dashboard → Integrations.
    - **Supabase** or **Neon** (free PostgreSQL) — also fine.
 2. In your Vercel project → Settings → Environment Variables, add for **Production**, **Preview**, and **Development**:
-   - `DATABASE_URL` → the Postgres connection string
-   - `AUTH_SECRET` → a random string, e.g. `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+    - `DATABASE_URL` → the Postgres connection string
+      - If you use **Vercel Postgres** (which injects credentials with a project
+        prefix), add the connection string as `DATABASE_URL` *or* leave the
+        auto-generated `LEAGUEHUB_DATABASE_URL` / `LEAGUEHUB_POOL_DATABASE_URL`
+        in place — the app reads both automatically, so no manual rename needed.
+    - `AUTH_SECRET` → a random string, e.g. `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
    - Build image: Node 22 (Vercel default) is fine.
    - The `postinstall` script runs `prisma generate`, so the Prisma Client is built automatically during Vercel's install step (this fixes the missing-`@prisma/client` type errors that otherwise appear on a fresh Vercel build).
 3. Apply the schema from your machine (the Prisma CLI connects directly to Postgres, so any provider works):

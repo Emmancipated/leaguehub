@@ -2,11 +2,14 @@ import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
+import { resolveDatabaseUrl } from "../lib/database-url";
 
-const connectionString = process.env.DATABASE_URL;
+const connectionString = resolveDatabaseUrl();
 
 if (!connectionString) {
-  throw new Error("DATABASE_URL is not configured.");
+  throw new Error(
+    "DATABASE_URL is not configured. Set DATABASE_URL, or for Vercel Postgres set LEAGUEHUB_DATABASE_URL.",
+  );
 }
 
 const adapter = new PrismaPg({
