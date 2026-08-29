@@ -1,0 +1,543 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+// ============================================================
+// USER & ACCESS
+// ============================================================
+
+enum UserRole {
+  SUPER_ADMIN
+  TOURNAMENT_ADMIN
+  REFEREE
+  TEAM_MANAGER
+  PLAYER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String?
+  role         UserRole @default(PLAYER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tournamentsCreated Tournament[] @relation("TournamentCreatedBy")
+
+  teamManagers TeamManager[]
+
+  protestsSubmitted Protest[] @relation("ProtestSubmittedBy")
+  protestsReviewed  Protest[] @relation("ProtestReviewedBy")
+
+  @@index([role])
+}
+
+
+// ============================================================
+// TOURNAMENT
+// ============================================================
+
+enum TournamentStatus {
+  DRAFT
+  REGISTRATION
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum CompetitionFormat {
+  LEAGUE
+  KNOCKOUT
+  GROUP_AND_KNOCKOUT
+}
+
+model Tournament {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+
+  status TournamentStatus @default(DRAFT)
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  createdById String
+  createdBy   User @relation("TournamentCreatedBy", fields: [createdById], references: [id])
+
+  settings TournamentSettings?
+
+  groups TournamentGroup[]
+
+  teams Team[]
+
+  players Player[]
+
+  matches Match[]
+
+  disciplinaryRecords DisciplinaryRecord[]
+
+  suspensions Suspension[]
+
+  protests Protest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([startDate])
+}
+
+
+// ============================================================
+// TOURNAMENT SETTINGS
+// ============================================================
+
+enum RoundRobinType {
+  SINGLE
+  DOUBLE
+}
+
+enum TieBreaker {
+  POINTS
+  GOAL_DIFFERENCE
+  GOALS_SCORED
+  HEAD_TO_HEAD
+  FAIR_PLAY
+  DRAW
+}
+
+model TournamentSettings {
+  id String @id @default(cuid())
+
+  tournamentId String @unique
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  // Competition
+  competitionFormat CompetitionFormat @default(LEAGUE)
+  roundRobinType   RoundRobinType   @default(SINGLE)
+  numberOfTeams    Int
+
+  // Squad
+  minimumPlayersPerTeam Int?
+  maximumPlayersPerTeam Int?
+
+  playersOnPitch  Int @default(6)
+  outfieldPlayers Int @default(5)
+
+  // Match
+  matchDurationMinutes     Int @default(15)
+  halfTimeDurationMinutes  Int @default(5)
+
+  rollingSubstitutions Boolean @default(true)
+
+  // Rules
+  offsideEnabled              Boolean @default(false)
+  goalkeeperBackPassEnabled   Boolean @default(false)
+  designatedSubstitutionArea  Boolean @default(true)
+
+  refereeHasFinalAuthority       Boolean @default(true)
+  captainOnlyMayApproachReferee  Boolean @default(true)
+
+  // Points
+  winPoints  Int @default(3)
+  drawPoints Int @default(1)
+  lossPoints Int @default(0)
+
+  // Tie breakers
+  tieBreaker1 TieBreaker @default(GOAL_DIFFERENCE)
+  tieBreaker2 TieBreaker @default(GOALS_SCORED)
+  tieBreaker3 TieBreaker @default(HEAD_TO_HEAD)
+  tieBreaker4 TieBreaker @default(FAIR_PLAY)
+  tieBreaker5 TieBreaker @default(DRAW)
+
+  // Discipline
+  yellowCardIsWarning          Boolean @default(true)
+  secondYellowIsRed            Boolean @default(true)
+  tournamentCommitteeCanSuspend Boolean @default(true)
+  seriousMisconductCanDisqualify Boolean @default(true)
+
+  // Registration
+  registrationOpensAt  DateTime?
+  registrationClosesAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+// ============================================================
+// TOURNAMENT GROUP
+// ============================================================
+
+model TournamentGroup {
+  id String @id @default(cuid())
+
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  name String
+  code String?
+
+  teams   Team[]
+  matches Match[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tournamentId, name])
+  @@index([tournamentId])
+}
+
+
+// ============================================================
+// TEAM
+// ============================================================
+
+model Team {
+  id String @id @default(cuid())
+
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  groupId String?
+  group   TournamentGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  name      String
+  shortName String?
+  logoUrl   String?
+
+  captainId String?
+
+  isActive Boolean @default(true)
+
+  registeredAt DateTime @default(now())
+
+  players  TeamPlayer[]
+  managers TeamManager[]
+
+  homeMatches Match[] @relation("HomeTeamMatches")
+  awayMatches Match[] @relation("AwayTeamMatches")
+
+  @@unique([tournamentId, name])
+  @@index([tournamentId])
+  @@index([groupId])
+}
+
+
+// ============================================================
+// TEAM MANAGER
+// ============================================================
+
+model TeamManager {
+  id String @id @default(cuid())
+
+  teamId String
+  userId String
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([teamId, userId])
+  @@index([userId])
+}
+
+
+// ============================================================
+// PLAYER
+// ============================================================
+
+enum PlayerRegistrationStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  REMOVED
+}
+
+model Player {
+  id String @id @default(cuid())
+
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  firstName String
+  lastName  String
+
+  displayName String?
+
+  jerseyNumber Int?
+
+  dateOfBirth DateTime?
+
+  photoUrl String?
+  phoneNumber String?
+
+  registrationStatus PlayerRegistrationStatus @default(PENDING)
+
+  teamRegistrations   TeamPlayer[]
+  matchEvents         MatchEvent[]
+  disciplinaryRecords DisciplinaryRecord[]
+  suspensions         Suspension[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tournamentId])
+  @@index([registrationStatus])
+}
+
+
+// ============================================================
+// TEAM PLAYER REGISTRATION
+// ============================================================
+
+model TeamPlayer {
+  id String @id @default(cuid())
+
+  teamId   String
+  playerId String
+
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  registeredAt DateTime @default(now())
+
+  leftAt DateTime?
+
+  isActive Boolean @default(true)
+
+  @@unique([teamId, playerId])
+  @@index([playerId])
+  @@index([teamId, isActive])
+}
+
+
+// ============================================================
+// MATCH
+// ============================================================
+
+enum MatchStatus {
+  SCHEDULED
+  LIVE
+  HALF_TIME
+  COMPLETED
+  POSTPONED
+  CANCELLED
+}
+
+model Match {
+  id String @id @default(cuid())
+
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  groupId String?
+  group   TournamentGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  homeTeamId String
+  awayTeamId String
+
+  homeTeam Team @relation("HomeTeamMatches", fields: [homeTeamId], references: [id])
+  awayTeam Team @relation("AwayTeamMatches", fields: [awayTeamId], references: [id])
+
+  matchNumber Int?
+  roundNumber Int?
+
+  scheduledAt DateTime?
+
+  venue String?
+
+  status MatchStatus @default(SCHEDULED)
+
+  homeScore Int @default(0)
+  awayScore Int @default(0)
+
+  refereeName String?
+
+  events MatchEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tournamentId])
+  @@index([groupId])
+  @@index([homeTeamId])
+  @@index([awayTeamId])
+  @@index([scheduledAt])
+  @@index([status])
+
+  @@unique([tournamentId, matchNumber])
+}
+
+
+// ============================================================
+// MATCH EVENTS
+// ============================================================
+
+enum MatchEventType {
+  GOAL
+  OWN_GOAL
+  YELLOW_CARD
+  SECOND_YELLOW
+  RED_CARD
+  SUBSTITUTION
+  PENALTY_MISSED
+}
+
+enum CardType {
+  YELLOW
+  RED
+}
+
+model MatchEvent {
+  id String @id @default(cuid())
+
+  matchId  String
+  playerId String?
+
+  type MatchEventType
+
+  minute   Int?
+  addedTime Int?
+
+  cardType CardType?
+
+  description String?
+
+  match  Match   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player Player? @relation(fields: [playerId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([matchId])
+  @@index([playerId])
+  @@index([type])
+}
+
+
+// ============================================================
+// DISCIPLINARY RECORD
+// ============================================================
+
+model DisciplinaryRecord {
+  id String @id @default(cuid())
+
+  tournamentId String
+  playerId     String
+  matchId      String?
+
+  type MatchEventType
+
+  description String?
+
+  issuedAt DateTime @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player     Player     @relation(fields: [playerId], references: [id])
+
+  @@index([tournamentId])
+  @@index([playerId])
+  @@index([matchId])
+}
+
+
+// ============================================================
+// SUSPENSION
+// ============================================================
+
+enum SuspensionStatus {
+  ACTIVE
+  SERVED
+  CANCELLED
+}
+
+model Suspension {
+  id String @id @default(cuid())
+
+  tournamentId String
+  playerId     String
+
+  matches       Int @default(1)
+  matchesServed Int @default(0)
+
+  reason String
+
+  status SuspensionStatus @default(ACTIVE)
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player     Player     @relation(fields: [playerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tournamentId])
+  @@index([playerId])
+  @@index([status])
+}
+
+
+// ============================================================
+// PROTEST
+// ============================================================
+
+enum ProtestStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+  RESOLVED
+}
+
+enum ProtestDecision {
+  NO_ACTION
+  WARNING
+  MATCH_FORFEIT
+  POINT_DEDUCTION
+  TEAM_DISQUALIFIED
+  PLAYER_SUSPENDED
+  FIXTURE_CHANGED
+  OTHER
+}
+
+model Protest {
+  id String @id @default(cuid())
+
+  tournamentId String
+  matchId      String?
+
+  submittedById String
+  reviewedById  String?
+
+  subject     String
+  description String
+
+  status ProtestStatus @default(SUBMITTED)
+
+  decision      ProtestDecision?
+  decisionNotes String?
+
+  submittedAt DateTime @default(now())
+  reviewedAt  DateTime?
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  submittedBy User  @relation("ProtestSubmittedBy", fields: [submittedById], references: [id])
+  reviewedBy  User? @relation("ProtestReviewedBy", fields: [reviewedById], references: [id])
+
+  @@index([tournamentId])
+  @@index([matchId])
+  @@index([status])
+}

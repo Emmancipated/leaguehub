@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: leaguehub-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: leaguehub
+      POSTGRES_PASSWORD: leaguehub
+      POSTGRES_DB: leaguehub
+    ports:
+      - "5433:5432"
+    volumes:
+      - leaguehub_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  leaguehub_postgres_data:

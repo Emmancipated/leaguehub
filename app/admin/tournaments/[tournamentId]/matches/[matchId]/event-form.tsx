@@ -1,0 +1,178 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+type Player = {
+  id: string;
+  firstName: string;
+  lastName: string;
+};
+
+type Props = {
+  matchId: string;
+  players: Player[];
+  disabled: boolean;
+};
+
+const EVENT_TYPES = [
+  { value: "GOAL", label: "Goal" },
+  { value: "OWN_GOAL", label: "Own Goal" },
+  { value: "YELLOW_CARD", label: "Yellow Card" },
+  { value: "SECOND_YELLOW", label: "Second Yellow" },
+  { value: "RED_CARD", label: "Red Card" },
+  { value: "SUBSTITUTION", label: "Substitution" },
+  { value: "PENALTY_MISSED", label: "Penalty Missed" },
+];
+
+export default function EventForm({ matchId, players, disabled }: Props) {
+  const router = useRouter();
+
+  const [type, setType] = useState("GOAL");
+  const [playerId, setPlayerId] = useState("");
+  const [minute, setMinute] = useState("");
+  const [addedTime, setAddedTime] = useState("");
+  const [description, setDescription] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await fetch(`/api/admin/matches/${matchId}/events`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type,
+          playerId: playerId || null,
+          minute: minute ? Number(minute) : null,
+          addedTime: addedTime ? Number(addedTime) : null,
+          description: description || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to record event.");
+      }
+
+      setPlayerId("");
+      setMinute("");
+      setAddedTime("");
+      setDescription("");
+
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="border-t bg-gray-50 p-6">
+      <h3 className="font-semibold">Record Event</h3>
+
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <div>
+          <label className="mb-2 block text-sm font-medium">Event</label>
+
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            disabled={disabled || loading}
+            className="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-500 outline-none focus:border-black focus:ring-2 focus:ring-black/20"
+          >
+            {EVENT_TYPES.map((event) => (
+              <option key={event.value} value={event.value}>
+                {event.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium">Player</label>
+
+          <select
+            value={playerId}
+            onChange={(e) => setPlayerId(e.target.value)}
+            disabled={disabled || loading}
+            className="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-500 outline-none focus:border-black focus:ring-2 focus:ring-black/20"
+          >
+            <option value="">Select player</option>
+
+            {players.map((player) => (
+              <option key={player.id} value={player.id}>
+                {player.firstName} {player.lastName}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium">Minute</label>
+
+          <input
+            type="number"
+            min="0"
+            value={minute}
+            onChange={(e) => setMinute(e.target.value)}
+            placeholder="e.g. 12"
+            disabled={disabled || loading}
+            className="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-500 outline-none focus:border-black focus:ring-2 focus:ring-black/20"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium">Added Time</label>
+
+          <input
+            type="number"
+            min="0"
+            value={addedTime}
+            onChange={(e) => setAddedTime(e.target.value)}
+            placeholder="e.g. 2"
+            disabled={disabled || loading}
+            className="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-500 outline-none focus:border-black focus:ring-2 focus:ring-black/20"
+          />
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <label className="mb-2 block text-sm font-medium">Description</label>
+
+        <input
+          type="text"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Optional"
+          disabled={disabled || loading}
+          className="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-500 outline-none focus:border-black focus:ring-2 focus:ring-black/20"
+        />
+      </div>
+
+      {error && (
+        <div className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={disabled || loading}
+        className="mt-5 rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {loading ? "Recording..." : "Record Event"}
+      </button>
+    </form>
+  );
+}
