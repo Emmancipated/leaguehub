@@ -136,6 +136,33 @@ prisma/
   migrations/                           # SQL migrations
 ```
 
+## Deploy to Vercel (with a free PostgreSQL)
+
+Prisma Console's "import repository" feature requires Prisma 8 — a breaking upgrade that rewrites the Prisma Client query API (`prisma.x.findMany({...})` → the new contract-based `db.orm.public.X.where()...`) and requires Node 22.18+. This repo runs Prisma 7, so use a standard free PostgreSQL provider instead (works unchanged with the current stack).
+
+1. Provision a free Postgres database:
+   - **Vercel Postgres** (first-party) — create one from the Vercel dashboard → Integrations.
+   - **Supabase** or **Neon** (free PostgreSQL) — also fine.
+2. In your Vercel project → Settings → Environment Variables, add for **Production**, **Preview**, and **Development**:
+   - `DATABASE_URL` → the Postgres connection string
+   - `AUTH_SECRET` → a random string, e.g. `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+   - Build image: Node 22 (Vercel default) is fine.
+   - The `postinstall` script runs `prisma generate`, so the Prisma Client is built automatically during Vercel's install step (this fixes the missing-`@prisma/client` type errors that otherwise appear on a fresh Vercel build).
+3. Apply the schema from your machine (the Prisma CLI connects directly to Postgres, so any provider works):
+   ```bash
+   # point .env at the remote Postgres
+   npx prisma db push     # create the schema
+   npx prisma db seed     # create the SUPER_ADMIN account
+   ```
+4. Deploy:
+   ```bash
+   npx vercel --prod
+   ```
+   or push to the linked Git repository for automatic deploys.
+5. Verify with `GET /api/health/db`.
+
+After deploy, sign in with the seeded admin account `admin@leaguehub.local` / `Admin123!` (change the password after first sign-in).
+
 ## Notes
 
 - The app uses Prisma's PostgreSQL driver adapter and expects a local Postgres container (see `docker-compose.yml`).
