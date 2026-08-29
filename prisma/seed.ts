@@ -1,27 +1,16 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
-import { resolveDatabaseUrl } from "../lib/database-url";
+import { createPrismaAdapter } from "../lib/prisma-adapter";
 
-const connectionString = resolveDatabaseUrl();
-
-if (!connectionString) {
-  throw new Error(
-    "DATABASE_URL is not configured. Set DATABASE_URL, or for Vercel Postgres set LEAGUEHUB_DATABASE_URL.",
-  );
-}
-
-const adapter = new PrismaPg({
-  connectionString,
-});
+const adapter = createPrismaAdapter();
 
 const prisma = new PrismaClient({
   adapter,
 });
 
 async function main() {
-  const email = "admin@leaguehub.local";
+  const email = "admin@emmanuel.com";
   const password = "Admin123!";
 
   const passwordHash = await bcrypt.hash(password, 12);
