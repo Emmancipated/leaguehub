@@ -18,6 +18,11 @@ export const metadata: Metadata = {
     "Manage tournaments, teams, fixtures and live scores in one place.",
 };
 
+// Admin and tournament pages read/write the database and depend on auth, so
+// they must render on demand. Force every route to be dynamic to prevent
+// Next.js from prerendering pages (and hitting the database) at build time.
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
