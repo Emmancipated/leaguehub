@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth/authorization";
+import { requireSuperAdmin } from "@/lib/auth/authorization";
 import { authErrorResponse } from "@/lib/auth/api-auth";
 
 type Params = {
@@ -10,15 +10,14 @@ type Params = {
   }>;
 };
 
-// const ALLOWED_STATUSES = [
-//   "SCHEDULED",
-//   "LIVE",
-//   "HALF_TIME",
-//   "COMPLETED",
-//   "POSTPONED",
-//   "CANCELLED",
-// ] as const;
-const ALLOWED_STATUSES = ["SCHEDULED", "LIVE", "COMPLETED"] as const;
+const ALLOWED_STATUSES = [
+  "SCHEDULED",
+  "LIVE",
+  "HALF_TIME",
+  "COMPLETED",
+  "POSTPONED",
+  "CANCELLED",
+] as const;
 
 type MatchStatus = (typeof ALLOWED_STATUSES)[number];
 
@@ -36,6 +35,20 @@ function parseScore(value: unknown) {
   }
 
   return score;
+}
+
+function parsePositiveInteger(value: unknown, fieldName: string) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new Error(`${fieldName} must be a positive integer.`);
+  }
+
+  return parsed;
 }
 
 export async function GET(_request: NextRequest, { params }: Params) {
@@ -84,7 +97,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
-    await requireAdmin();
+    await requireSuperAdmin();
 
     const { tournamentId, matchId } = await params;
     const body = await request.json();
@@ -104,41 +117,20 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       status?: MatchStatus;
       homeScore?: number;
       awayScore?: number;
+      homeTeamId?: string;
+      awayTeamId?: string;
+      groupId?: string | null;
+      matchNumber?: number | null;
+      roundNumber?: number | null;
       scheduledAt?: Date | null;
       venue?: string | null;
       refereeName?: string | null;
     } = {};
 
-    // if (body.status !== undefined) {
-    //   if (!isValidStatus(body.status)) {
-    //     return NextResponse.json(
-    //       { error: "Invalid match status." },
-    //       { status: 400 },
-    //     );
-    //   }
-
-    //   data.status = body.status;
-    // }
     if (body.status !== undefined) {
       if (!isValidStatus(body.status)) {
         return NextResponse.json(
           { error: "Invalid match status." },
-          { status: 400 },
-        );
-      }
-
-      const currentStatus = existingMatch.status;
-
-      const validTransition =
-        (currentStatus === "SCHEDULED" && body.status === "LIVE") ||
-        (currentStatus === "LIVE" && body.status === "COMPLETED") ||
-        currentStatus === body.status;
-
-      if (!validTransition) {
-        return NextResponse.json(
-          {
-            error: `Invalid match status transition from ${currentStatus} to ${body.status}.`,
-          },
           { status: 400 },
         );
       }
@@ -170,6 +162,101 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       }
 
       data.awayScore = score;
+    }
+
+    const homeTeamId = body.homeTeamId ?? existingMatch.homeTeamId;
+    const awayTeamId = body.awayTeamId ?? existingMatch.awayTeamId;
+
+    if (homeTeamId === awayTeamId) {
+      return NextResponse.json(
+        { error: "Home and away teams must be different." },
+        { status: 400 },
+      );
+    }
+
+    if (body.homeTeamId !== undefined || body.awayTeamId !== undefined) {
+      const teams = await prisma.team.findMany({
+        where: {
+          id: { in: [homeTeamId, awayTeamId] },
+          tournamentId,
+          isActive: true,
+        },
+        select: { id: true },
+      });
+
+      if (teams.length !== 2) {
+        return NextResponse.json(
+          { error: "Both teams must belong to this tournament and be active." },
+          { status: 400 },
+        );
+      }
+
+      data.homeTeamId = homeTeamId;
+      data.awayTeamId = awayTeamId;
+    }
+
+    if (body.groupId !== undefined) {
+      if (body.groupId === null || body.groupId === "") {
+        data.groupId = null;
+      } else {
+        const group = await prisma.tournamentGroup.findFirst({
+          where: { id: body.groupId, tournamentId },
+          select: { id: true },
+        });
+
+        if (!group) {
+          return NextResponse.json(
+            { error: "Invalid tournament group." },
+            { status: 400 },
+          );
+        }
+
+        data.groupId = body.groupId;
+      }
+    }
+
+    try {
+      if (body.matchNumber !== undefined) {
+        data.matchNumber = parsePositiveInteger(
+          body.matchNumber,
+          "Match number",
+        );
+      }
+
+      if (body.roundNumber !== undefined) {
+        data.roundNumber = parsePositiveInteger(
+          body.roundNumber,
+          "Round number",
+        );
+      }
+    } catch (error) {
+      return NextResponse.json(
+        {
+          error:
+            error instanceof Error ? error.message : "Invalid match number.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (data.matchNumber !== undefined && data.matchNumber !== null) {
+      const duplicate = await prisma.match.findFirst({
+        where: {
+          tournamentId,
+          matchNumber: data.matchNumber,
+          id: { not: matchId },
+        },
+        select: { id: true },
+      });
+
+      if (duplicate) {
+        return NextResponse.json(
+          {
+            error: `Match number ${data.matchNumber} is already in use in this tournament.`,
+          },
+          { status: 409 },
+        );
+      }
     }
 
     if (body.scheduledAt !== undefined) {
@@ -254,7 +341,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
 export async function DELETE(_request: NextRequest, { params }: Params) {
   try {
-    await requireAdmin();
+    await requireSuperAdmin();
 
     const { tournamentId, matchId } = await params;
 

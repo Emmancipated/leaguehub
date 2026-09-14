@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import AdminNav from "./_components/admin-nav";
+import LogoutButton from "./_components/logout-button";
 
 type Props = {
   children: React.ReactNode;
@@ -99,6 +100,8 @@ export default async function AdminTournamentLayout({
                 </p>
               )}
             </div>
+
+            <LogoutButton />
           </div>
         </div>
       </header>

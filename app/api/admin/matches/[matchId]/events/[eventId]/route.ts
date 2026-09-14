@@ -117,6 +117,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         ? body.playerId || null
         : existingEvent.playerId;
 
+    const newMatchPlayerId =
+      body.matchPlayerId !== undefined
+        ? body.matchPlayerId || null
+        : existingEvent.matchPlayerId;
+
     const newMinute =
       body.minute !== undefined
         ? parseMinute(body.minute)
@@ -161,7 +166,23 @@ export async function PATCH(request: NextRequest, { params }: Params) {
      */
     let newPlayerTeamId: string | null = null;
 
-    if (newPlayerId) {
+    if (newMatchPlayerId) {
+      const matchPlayer = await prisma.matchPlayer.findFirst({
+        where: { id: newMatchPlayerId, matchId },
+        select: { id: true, playerId: true, teamId: true },
+      });
+
+      if (!matchPlayer) {
+        return NextResponse.json(
+          { error: "Selected match-only player was not found." },
+          { status: 400 },
+        );
+      }
+
+      newPlayerTeamId = matchPlayer.teamId;
+    }
+
+    if (newPlayerId && !newMatchPlayerId) {
       const registration = await prisma.teamPlayer.findFirst({
         where: {
           playerId: newPlayerId,
@@ -206,7 +227,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
      */
     let oldPlayerTeamId: string | null = null;
 
-    if (existingEvent.playerId) {
+    if (existingEvent.teamId) {
+      oldPlayerTeamId = existingEvent.teamId;
+    } else if (existingEvent.playerId) {
       const oldRegistration = await prisma.teamPlayer.findFirst({
         where: {
           playerId: existingEvent.playerId,
@@ -280,6 +303,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         data: {
           type: newType,
           playerId: newPlayerId,
+          matchPlayerId: newMatchPlayerId,
+          teamId: newPlayerTeamId,
           minute: newMinute,
           addedTime: newAddedTime,
           description: newDescription,

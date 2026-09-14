@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth/authorization";
 import MatchActions from "./match-actions";
 import EventForm from "./event-form";
 import EventActions from "./event-actions";
@@ -27,6 +28,7 @@ export default async function MatchPage({ params }: Props) {
       events: {
         include: {
           player: true,
+          matchPlayer: { include: { team: true } },
         },
         orderBy: {
           minute: "asc",
@@ -39,28 +41,61 @@ export default async function MatchPage({ params }: Props) {
     notFound();
   }
 
-  const players = await prisma.player.findMany({
-    where: {
-      tournamentId,
-      registrationStatus: "ACTIVE",
-      teamRegistrations: {
-        some: {
-          teamId: {
-            in: [match.homeTeamId, match.awayTeamId],
+  const [players, teams, groups, currentUser] = await Promise.all([
+    prisma.player.findMany({
+      where: {
+        tournamentId,
+        registrationStatus: "ACTIVE",
+        teamRegistrations: {
+          some: {
+            teamId: {
+              in: [match.homeTeamId, match.awayTeamId],
+            },
+            isActive: true,
           },
-          isActive: true,
         },
       },
-    },
-    orderBy: [
-      {
-        firstName: "asc",
+      include: {
+        teamRegistrations: {
+          where: {
+            teamId: { in: [match.homeTeamId, match.awayTeamId] },
+            isActive: true,
+          },
+          include: { team: { select: { id: true, name: true } } },
+        },
       },
-      {
-        lastName: "asc",
-      },
-    ],
+      orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
+    }),
+    prisma.team.findMany({
+      where: { tournamentId, isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.tournamentGroup.findMany({
+      where: { tournamentId },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    getCurrentUser(),
+  ]);
+
+  const playerOptions = players.flatMap((player) =>
+    player.teamRegistrations.map((registration) => ({
+      id: player.id,
+      firstName: player.firstName,
+      lastName: player.lastName,
+      teamId: registration.team.id,
+      teamName: registration.team.name,
+    })),
+  );
+
+  const matchPlayers = await prisma.matchPlayer.findMany({
+    where: { matchId },
+    include: { team: { select: { id: true, name: true } } },
+    orderBy: { name: "asc" },
   });
+
+  const isSuperAdmin = currentUser?.role === "SUPER_ADMIN";
   return (
     <div>
       <div className="mt-6 overflow-hidden rounded-2xl border bg-white">
@@ -139,22 +174,36 @@ export default async function MatchPage({ params }: Props) {
             </div>
           </div>
 
-          <EditMatchForm
-            tournamentId={tournamentId}
-            match={{
-              id: match.id,
-              scheduledAt: match.scheduledAt,
-              venue: match.venue,
-              refereeName: match.refereeName,
-            }}
-          />
+          {isSuperAdmin && (
+            <EditMatchForm
+              tournamentId={tournamentId}
+              teams={teams}
+              groups={groups}
+              match={{
+                id: match.id,
+                homeTeamId: match.homeTeamId,
+                awayTeamId: match.awayTeamId,
+                groupId: match.groupId,
+                matchNumber: match.matchNumber,
+                roundNumber: match.roundNumber,
+                scheduledAt: match.scheduledAt,
+                venue: match.venue,
+                status: match.status,
+                homeScore: match.homeScore,
+                awayScore: match.awayScore,
+                refereeName: match.refereeName,
+              }}
+            />
+          )}
         </div>
 
-        <MatchActions
-          tournamentId={tournamentId}
-          matchId={match.id}
-          status={match.status}
-        />
+        {isSuperAdmin && (
+          <MatchActions
+            tournamentId={tournamentId}
+            matchId={match.id}
+            status={match.status}
+          />
+        )}
       </div>
       <div className="mt-8 rounded-2xl border bg-white">
         <div className="border-b px-6 py-5">
@@ -178,9 +227,11 @@ export default async function MatchPage({ params }: Props) {
                 <div>
                   <p className="font-medium">{event.type.replace("_", " ")}</p>
 
-                  {event.player && (
+                  {(event.player || event.matchPlayer) && (
                     <p className="text-sm text-gray-500">
-                      {event.player.firstName} {event.player.lastName}
+                      {event.matchPlayer?.name ??
+                        `${event.player?.firstName} ${event.player?.lastName}`}
+                      {event.matchPlayer && ` (${event.matchPlayer.team.name})`}
                     </p>
                   )}
                 </div>
@@ -199,7 +250,17 @@ export default async function MatchPage({ params }: Props) {
       </div>
       <EventForm
         matchId={match.id}
-        players={players}
+        players={playerOptions}
+        matchPlayers={matchPlayers.map((matchPlayer) => ({
+          id: matchPlayer.id,
+          name: matchPlayer.name,
+          teamId: matchPlayer.team.id,
+          teamName: matchPlayer.team.name,
+        }))}
+        teams={[
+          { id: match.homeTeam.id, name: match.homeTeam.name },
+          { id: match.awayTeam.id, name: match.awayTeam.name },
+        ]}
         disabled={match.status !== "LIVE" && match.status !== "HALF_TIME"}
       />{" "}
     </div>

@@ -10,29 +10,57 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  const email = "admin@emmanuel.com";
-  const password = "Admin123!";
+  const requiredEnv = (name: string) => {
+    const value = process.env[name]?.trim();
 
-  const passwordHash = await bcrypt.hash(password, 12);
+    if (!value) {
+      throw new Error(`Missing required environment variable: ${name}`);
+    }
 
-  const user = await prisma.user.upsert({
-    where: { email },
+    return value;
+  };
+
+  const adminEmail = requiredEnv("ADMIN_EMAIL");
+  const adminPassword = requiredEnv("ADMIN_PASSWORD");
+  const superAdminEmail = requiredEnv("SUPER_ADMIN_EMAIL");
+  const superAdminPassword = requiredEnv("SUPER_ADMIN_PASSWORD");
+
+  const adminPasswordHash = await bcrypt.hash(adminPassword, 12);
+  const superAdminPasswordHash = await bcrypt.hash(superAdminPassword, 12);
+
+  const admin = await prisma.user.upsert({
+    where: { email: adminEmail },
     update: {
-      passwordHash,
-      role: "SUPER_ADMIN",
+      passwordHash: adminPasswordHash,
+      role: "TOURNAMENT_ADMIN",
       name: "LeagueHub Admin",
     },
     create: {
       name: "LeagueHub Admin",
-      email,
-      passwordHash,
+      email: adminEmail,
+      passwordHash: adminPasswordHash,
+      role: "TOURNAMENT_ADMIN",
+    },
+  });
+
+  const superAdmin = await prisma.user.upsert({
+    where: { email: superAdminEmail },
+    update: {
+      passwordHash: superAdminPasswordHash,
+      role: "SUPER_ADMIN",
+      name: "LeagueHub Super Admin",
+    },
+    create: {
+      name: "LeagueHub Super Admin",
+      email: superAdminEmail,
+      passwordHash: superAdminPasswordHash,
       role: "SUPER_ADMIN",
     },
   });
 
-  console.log("Admin account ready:");
-  console.log(`Email: ${user.email}`);
-  console.log(`Password: ${password}`);
+  console.log("Admin accounts ready:");
+  console.log(`Admin: ${admin.email} / ${adminPassword}`);
+  console.log(`Super admin: ${superAdmin.email} / ${superAdminPassword}`);
 }
 
 main()
