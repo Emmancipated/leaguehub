@@ -10,10 +10,20 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  const adminEmail = "admin@emmanuel.com";
-  const adminPassword = "Admin123!";
-  const superAdminEmail = "superadmin@emmanuel.com";
-  const superAdminPassword = "SuperAdmin123!";
+  const requiredEnv = (name: string) => {
+    const value = process.env[name]?.trim();
+
+    if (!value) {
+      throw new Error(`Missing required environment variable: ${name}`);
+    }
+
+    return value;
+  };
+
+  const adminEmail = requiredEnv("ADMIN_EMAIL");
+  const adminPassword = requiredEnv("ADMIN_PASSWORD");
+  const superAdminEmail = requiredEnv("SUPER_ADMIN_EMAIL");
+  const superAdminPassword = requiredEnv("SUPER_ADMIN_PASSWORD");
 
   const adminPasswordHash = await bcrypt.hash(adminPassword, 12);
   const superAdminPasswordHash = await bcrypt.hash(superAdminPassword, 12);
