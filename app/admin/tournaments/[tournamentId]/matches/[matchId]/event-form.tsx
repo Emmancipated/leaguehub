@@ -7,11 +7,27 @@ type Player = {
   id: string;
   firstName: string;
   lastName: string;
+  teamId: string;
+  teamName: string;
+};
+
+type MatchPlayer = {
+  id: string;
+  name: string;
+  teamId: string;
+  teamName: string;
+};
+
+type Team = {
+  id: string;
+  name: string;
 };
 
 type Props = {
   matchId: string;
   players: Player[];
+  matchPlayers: MatchPlayer[];
+  teams: Team[];
   disabled: boolean;
 };
 
@@ -25,7 +41,13 @@ const EVENT_TYPES = [
   { value: "PENALTY_MISSED", label: "Penalty Missed" },
 ];
 
-export default function EventForm({ matchId, players, disabled }: Props) {
+export default function EventForm({
+  matchId,
+  players,
+  matchPlayers,
+  teams,
+  disabled,
+}: Props) {
   const router = useRouter();
 
   const [type, setType] = useState("GOAL");
@@ -33,8 +55,11 @@ export default function EventForm({ matchId, players, disabled }: Props) {
   const [minute, setMinute] = useState("");
   const [addedTime, setAddedTime] = useState("");
   const [description, setDescription] = useState("");
+  const [guestName, setGuestName] = useState("");
+  const [guestTeamId, setGuestTeamId] = useState(teams[0]?.id ?? "");
 
   const [loading, setLoading] = useState(false);
+  const [addingGuest, setAddingGuest] = useState(false);
   const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -51,7 +76,13 @@ export default function EventForm({ matchId, players, disabled }: Props) {
         },
         body: JSON.stringify({
           type,
-          playerId: playerId || null,
+          playerId: playerId.startsWith("player:")
+            ? playerId.split(":")[1]
+            : null,
+          teamId: playerId.includes(":") ? playerId.split(":")[2] : null,
+          matchPlayerId: playerId.startsWith("match:")
+            ? playerId.split(":")[1]
+            : null,
           minute: minute ? Number(minute) : null,
           addedTime: addedTime ? Number(addedTime) : null,
           description: description || null,
@@ -74,6 +105,36 @@ export default function EventForm({ matchId, players, disabled }: Props) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function addGuestPlayer() {
+    if (!guestName.trim() || !guestTeamId) {
+      setError("Enter the ad hoc player's name and team.");
+      return;
+    }
+
+    setAddingGuest(true);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/admin/matches/${matchId}/players`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: guestName, teamId: guestTeamId }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to add ad hoc player.");
+      }
+
+      setGuestName("");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setAddingGuest(false);
     }
   }
 
@@ -111,8 +172,17 @@ export default function EventForm({ matchId, players, disabled }: Props) {
             <option value="">Select player</option>
 
             {players.map((player) => (
-              <option key={player.id} value={player.id}>
-                {player.firstName} {player.lastName}
+              <option
+                key={`${player.id}-${player.teamId}`}
+                value={`player:${player.id}:${player.teamId}`}
+              >
+                {player.firstName} {player.lastName} ({player.teamName})
+              </option>
+            ))}
+
+            {matchPlayers.map((player) => (
+              <option key={player.id} value={`match:${player.id}`}>
+                {player.name} ({player.teamName}, match-only)
               </option>
             ))}
           </select>
@@ -165,6 +235,49 @@ export default function EventForm({ matchId, players, disabled }: Props) {
           {error}
         </div>
       )}
+
+      <div className="mt-6 border-t pt-5">
+        <p className="text-sm font-semibold text-gray-900">
+          Add match-only player
+        </p>
+        <p className="mt-1 text-xs text-gray-500">
+          This player is available only for this match and will not change any
+          permanent team registration.
+        </p>
+
+        <div className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+          <input
+            type="text"
+            value={guestName}
+            onChange={(e) => setGuestName(e.target.value)}
+            placeholder="Player name"
+            disabled={disabled || loading || addingGuest}
+            className="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-black focus:ring-2 focus:ring-black/20"
+          />
+
+          <select
+            value={guestTeamId}
+            onChange={(e) => setGuestTeamId(e.target.value)}
+            disabled={disabled || loading || addingGuest}
+            className="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-black focus:ring-2 focus:ring-black/20"
+          >
+            {teams.map((team) => (
+              <option key={team.id} value={team.id}>
+                {team.name}
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="button"
+            onClick={addGuestPlayer}
+            disabled={disabled || loading || addingGuest}
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {addingGuest ? "Adding..." : "Add Player"}
+          </button>
+        </div>
+      </div>
 
       <button
         type="submit"

@@ -30,7 +30,15 @@ export async function POST(request: Request, { params }: Props) {
     const { matchId } = await params;
     const body = await request.json();
 
-    const { type, playerId, minute, addedTime, description } = body;
+    const {
+      type,
+      playerId,
+      teamId,
+      matchPlayerId,
+      minute,
+      addedTime,
+      description,
+    } = body;
 
     if (!isValidEventType(type)) {
       return NextResponse.json(
@@ -63,15 +71,33 @@ export async function POST(request: Request, { params }: Props) {
       );
     }
 
+    let resolvedPlayerId: string | null = null;
+    let resolvedMatchPlayerId: string | null = null;
     let playerTeamId: string | null = null;
 
-    if (playerId) {
+    if (matchPlayerId) {
+      const matchPlayer = await prisma.matchPlayer.findFirst({
+        where: { id: matchPlayerId, matchId },
+        select: { id: true, playerId: true, teamId: true },
+      });
+
+      if (!matchPlayer) {
+        return NextResponse.json(
+          { error: "Selected match-only player was not found." },
+          { status: 400 },
+        );
+      }
+
+      resolvedMatchPlayerId = matchPlayer.id;
+      resolvedPlayerId = matchPlayer.playerId;
+      playerTeamId = matchPlayer.teamId;
+    }
+
+    if (playerId && !matchPlayerId) {
       const registration = await prisma.teamPlayer.findFirst({
         where: {
           playerId,
-          teamId: {
-            in: [match.homeTeamId, match.awayTeamId],
-          },
+          teamId: teamId || { in: [match.homeTeamId, match.awayTeamId] },
           isActive: true,
           player: {
             tournamentId: match.tournamentId,
@@ -89,6 +115,7 @@ export async function POST(request: Request, { params }: Props) {
         );
       }
 
+      resolvedPlayerId = playerId;
       playerTeamId = registration.teamId;
     }
 
@@ -139,7 +166,9 @@ export async function POST(request: Request, { params }: Props) {
       const createdEvent = await tx.matchEvent.create({
         data: {
           matchId,
-          playerId: playerId || null,
+          playerId: resolvedPlayerId,
+          matchPlayerId: resolvedMatchPlayerId,
+          teamId: playerTeamId,
           type,
           minute: parsedMinute,
           addedTime: parsedAddedTime,
@@ -150,6 +179,7 @@ export async function POST(request: Request, { params }: Props) {
         },
         include: {
           player: true,
+          matchPlayer: { include: { team: true } },
         },
       });
 

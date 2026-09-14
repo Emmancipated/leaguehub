@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireSuperAdmin } from "@/lib/auth/authorization";
+import { authErrorResponse } from "@/lib/auth/api-auth";
 
 type Props = {
   params: Promise<{
@@ -9,6 +11,8 @@ type Props = {
 
 export async function PATCH(request: Request, { params }: Props) {
   try {
+    await requireSuperAdmin();
+
     const { matchId } = await params;
     const body = await request.json();
 
@@ -79,6 +83,12 @@ export async function PATCH(request: Request, { params }: Props) {
       match,
     });
   } catch (error) {
+    const authResponse = authErrorResponse(error);
+
+    if (authResponse) {
+      return authResponse;
+    }
+
     console.error("Update match error:", error);
 
     return NextResponse.json(
