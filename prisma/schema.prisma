@@ -281,6 +281,7 @@ model Player {
 
   teamRegistrations   TeamPlayer[]
   matchEvents         MatchEvent[]
+  assistedMatchEvents MatchEvent[] @relation("MatchEventAssistedByPlayer")
   matchAppearances    MatchPlayer[]
   disciplinaryRecords DisciplinaryRecord[]
   suspensions         Suspension[]
@@ -388,6 +389,7 @@ model MatchPlayer {
   player Player? @relation(fields: [playerId], references: [id], onDelete: SetNull)
 
   events MatchEvent[]
+  assistedEvents MatchEvent[] @relation("MatchEventAssistedByMatchPlayer")
 
   createdAt DateTime @default(now())
 
@@ -420,6 +422,8 @@ model MatchEvent {
   matchId       String
   playerId      String?
   matchPlayerId String?
+  assistedByPlayerId      String?
+  assistedByMatchPlayerId String?
   teamId        String?
 
   type MatchEventType
@@ -434,6 +438,8 @@ model MatchEvent {
   match       Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)
   player      Player?      @relation(fields: [playerId], references: [id])
   matchPlayer MatchPlayer? @relation(fields: [matchPlayerId], references: [id], onDelete: SetNull)
+  assistedByPlayer      Player?      @relation("MatchEventAssistedByPlayer", fields: [assistedByPlayerId], references: [id], onDelete: SetNull)
+  assistedByMatchPlayer MatchPlayer? @relation("MatchEventAssistedByMatchPlayer", fields: [assistedByMatchPlayerId], references: [id], onDelete: SetNull)
   team        Team?        @relation("MatchEventTeam", fields: [teamId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
@@ -441,6 +447,8 @@ model MatchEvent {
   @@index([matchId])
   @@index([playerId])
   @@index([matchPlayerId])
+  @@index([assistedByPlayerId])
+  @@index([assistedByMatchPlayerId])
   @@index([teamId])
   @@index([type])
 }

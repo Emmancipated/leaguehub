@@ -28,6 +28,8 @@ type MatchEvent = {
   addedTime: number | null;
   description: string | null;
   player: Player | null;
+  assistedByPlayer: Player | null;
+  assistedByMatchPlayer: { name: string } | null;
 };
 
 type MatchData = {
@@ -102,8 +104,9 @@ export default function LiveMatch({
   const isLive = match.status === "LIVE";
   const isFinished = match.status === "COMPLETED";
 
-  const showScore =
-    !(match.status === "SCHEDULED" || match.status === "POSTPONED");
+  const showScore = !(
+    match.status === "SCHEDULED" || match.status === "POSTPONED"
+  );
 
   return (
     <>
@@ -227,10 +230,7 @@ export default function LiveMatch({
         ) : (
           <div className="divide-y divide-slate-100">
             {match.events.map((event) => (
-              <div
-                key={event.id}
-                className="flex items-center gap-4 px-5 py-4"
-              >
+              <div key={event.id} className="flex items-center gap-4 px-5 py-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-lg">
                   {eventIcon(event.type)}
                 </div>
@@ -243,6 +243,14 @@ export default function LiveMatch({
                   {event.player && (
                     <p className="mt-0.5 text-sm text-slate-500">
                       {event.player.firstName} {event.player.lastName}
+                    </p>
+                  )}
+
+                  {(event.assistedByPlayer || event.assistedByMatchPlayer) && (
+                    <p className="mt-0.5 text-xs text-slate-400">
+                      Assist:{" "}
+                      {event.assistedByMatchPlayer?.name ??
+                        `${event.assistedByPlayer?.firstName} ${event.assistedByPlayer?.lastName}`}
                     </p>
                   )}
 

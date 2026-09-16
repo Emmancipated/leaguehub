@@ -67,6 +67,8 @@ export async function GET(_request: NextRequest, { params }: Params) {
         events: {
           include: {
             player: true,
+            assistedByPlayer: true,
+            assistedByMatchPlayer: true,
           },
           orderBy: [
             {

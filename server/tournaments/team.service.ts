@@ -130,3 +130,48 @@ export async function createTeam(
     throw error;
   }
 }
+
+export async function updateTeam(
+  tournamentId: string,
+  teamId: string,
+  input: {
+    name: string;
+  },
+) {
+  const name = input.name?.trim();
+
+  if (!name) {
+    throw new Error("Team name is required.");
+  }
+
+  const team = await prisma.team.findFirst({
+    where: {
+      id: teamId,
+      tournamentId,
+    },
+  });
+
+  if (!team) {
+    throw new Error("Team not found.");
+  }
+
+  try {
+    return await prisma.team.update({
+      where: {
+        id: teamId,
+      },
+      data: {
+        name,
+      },
+    });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes("Team_tournamentId_name")
+    ) {
+      throw new Error("A team with this name already exists.");
+    }
+
+    throw error;
+  }
+}
