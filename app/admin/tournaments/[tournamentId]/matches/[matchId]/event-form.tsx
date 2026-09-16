@@ -52,6 +52,7 @@ export default function EventForm({
 
   const [type, setType] = useState("GOAL");
   const [playerId, setPlayerId] = useState("");
+  const [assistedBy, setAssistedBy] = useState("");
   const [minute, setMinute] = useState("");
   const [addedTime, setAddedTime] = useState("");
   const [description, setDescription] = useState("");
@@ -83,6 +84,12 @@ export default function EventForm({
           matchPlayerId: playerId.startsWith("match:")
             ? playerId.split(":")[1]
             : null,
+          assistedByPlayerId: assistedBy.startsWith("player:")
+            ? assistedBy.split(":")[1]
+            : null,
+          assistedByMatchPlayerId: assistedBy.startsWith("match:")
+            ? assistedBy.split(":")[1]
+            : null,
           minute: minute ? Number(minute) : null,
           addedTime: addedTime ? Number(addedTime) : null,
           description: description || null,
@@ -96,6 +103,7 @@ export default function EventForm({
       }
 
       setPlayerId("");
+      setAssistedBy("");
       setMinute("");
       setAddedTime("");
       setDescription("");
@@ -187,6 +195,42 @@ export default function EventForm({
             ))}
           </select>
         </div>
+
+        {type === "GOAL" && (
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              Assisted by{" "}
+              <span className="font-normal text-gray-500">(optional)</span>
+            </label>
+
+            <select
+              value={assistedBy}
+              onChange={(e) => setAssistedBy(e.target.value)}
+              disabled={disabled || loading}
+              className="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-black focus:ring-2 focus:ring-black/20"
+            >
+              <option value="">No assist</option>
+
+              {players.map((player) => (
+                <option
+                  key={`assist-${player.id}-${player.teamId}`}
+                  value={`player:${player.id}:${player.teamId}`}
+                >
+                  {player.firstName} {player.lastName} ({player.teamName})
+                </option>
+              ))}
+
+              {matchPlayers.map((player) => (
+                <option
+                  key={`assist-${player.id}`}
+                  value={`match:${player.id}`}
+                >
+                  {player.name} ({player.teamName}, match-only)
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div>
           <label className="mb-2 block text-sm font-medium">Minute</label>

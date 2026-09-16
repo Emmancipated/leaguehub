@@ -29,6 +29,8 @@ export default async function MatchPage({ params }: Props) {
         include: {
           player: true,
           matchPlayer: { include: { team: true } },
+          assistedByPlayer: true,
+          assistedByMatchPlayer: { include: { team: true } },
         },
         orderBy: {
           minute: "asc",
@@ -232,6 +234,15 @@ export default async function MatchPage({ params }: Props) {
                       {event.matchPlayer?.name ??
                         `${event.player?.firstName} ${event.player?.lastName}`}
                       {event.matchPlayer && ` (${event.matchPlayer.team.name})`}
+                      {(event.assistedByPlayer ||
+                        event.assistedByMatchPlayer) && (
+                        <span>
+                          {" "}
+                          with assist from{" "}
+                          {event.assistedByMatchPlayer?.name ??
+                            `${event.assistedByPlayer?.firstName} ${event.assistedByPlayer?.lastName}`}
+                        </span>
+                      )}
                     </p>
                   )}
                 </div>

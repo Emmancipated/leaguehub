@@ -35,6 +35,8 @@ export async function POST(request: Request, { params }: Props) {
       playerId,
       teamId,
       matchPlayerId,
+      assistedByPlayerId,
+      assistedByMatchPlayerId,
       minute,
       addedTime,
       description,
@@ -132,6 +134,73 @@ export async function POST(request: Request, { params }: Props) {
       );
     }
 
+    let resolvedAssistedByPlayerId: string | null = null;
+    let resolvedAssistedByMatchPlayerId: string | null = null;
+
+    if (assistedByPlayerId || assistedByMatchPlayerId) {
+      if (type !== "GOAL") {
+        return NextResponse.json(
+          { error: "Only a goal can have an assist." },
+          { status: 400 },
+        );
+      }
+
+      let assisterTeamId: string | null = null;
+
+      if (assistedByMatchPlayerId) {
+        const assister = await prisma.matchPlayer.findFirst({
+          where: { id: assistedByMatchPlayerId, matchId },
+          select: { id: true, playerId: true, teamId: true },
+        });
+
+        if (!assister) {
+          return NextResponse.json(
+            { error: "Selected assisting match-only player was not found." },
+            { status: 400 },
+          );
+        }
+
+        resolvedAssistedByMatchPlayerId = assister.id;
+        assisterTeamId = assister.teamId;
+      } else {
+        const registration = await prisma.teamPlayer.findFirst({
+          where: {
+            playerId: assistedByPlayerId,
+            teamId: { in: [match.homeTeamId, match.awayTeamId] },
+            isActive: true,
+            player: { tournamentId: match.tournamentId },
+          },
+        });
+
+        if (!registration) {
+          return NextResponse.json(
+            { error: "Selected assisting player is not in this match." },
+            { status: 400 },
+          );
+        }
+
+        resolvedAssistedByPlayerId = assistedByPlayerId;
+        assisterTeamId = registration.teamId;
+      }
+
+      if (assisterTeamId !== playerTeamId) {
+        return NextResponse.json(
+          { error: "The assisting player must be on the scoring team." },
+          { status: 400 },
+        );
+      }
+
+      if (
+        resolvedAssistedByPlayerId === resolvedPlayerId &&
+        resolvedAssistedByMatchPlayerId === resolvedMatchPlayerId
+      ) {
+        return NextResponse.json(
+          { error: "The scorer and assisting player must be different." },
+          { status: 400 },
+        );
+      }
+    }
+
     const parsedMinute =
       minute !== null && minute !== undefined && minute !== ""
         ? Number(minute)
@@ -168,6 +237,8 @@ export async function POST(request: Request, { params }: Props) {
           matchId,
           playerId: resolvedPlayerId,
           matchPlayerId: resolvedMatchPlayerId,
+          assistedByPlayerId: resolvedAssistedByPlayerId,
+          assistedByMatchPlayerId: resolvedAssistedByMatchPlayerId,
           teamId: playerTeamId,
           type,
           minute: parsedMinute,
@@ -180,6 +251,8 @@ export async function POST(request: Request, { params }: Props) {
         include: {
           player: true,
           matchPlayer: { include: { team: true } },
+          assistedByPlayer: true,
+          assistedByMatchPlayer: { include: { team: true } },
         },
       });
 

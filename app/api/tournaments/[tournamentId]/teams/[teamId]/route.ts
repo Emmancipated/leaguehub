@@ -1,4 +1,48 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { updateTeam } from "@/server/tournaments/team.service";
+import { requireAdmin } from "@/lib/auth/authorization";
+import { authErrorResponse } from "@/lib/auth/api-auth";
+
+type RouteContext = {
+  params: Promise<{
+    tournamentId: string;
+    teamId: string;
+  }>;
+};
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: RouteContext,
+) {
+  try {
+    await requireAdmin();
+
+    const { tournamentId, teamId } = await params;
+    const body = await request.json();
+    const team = await updateTeam(tournamentId, teamId, {
+      name: body.name,
+    });
+
+    return NextResponse.json(team);
+  } catch (error) {
+    const authResponse = authErrorResponse(error);
+
+    if (authResponse) {
+      return authResponse;
+    }
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to update team.";
+
+    return NextResponse.json(
+      { error: message },
+      { status: message === "Team not found." ? 404 : 400 },
+    );
+  }
+}
+
 import { prisma } from "@/lib/prisma";
 
 type Context = {

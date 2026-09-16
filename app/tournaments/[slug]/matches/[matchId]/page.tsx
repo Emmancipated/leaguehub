@@ -1,10 +1,7 @@
 import { notFound } from "next/navigation";
 import { CalendarDays, Clock3 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import {
-  formatMatchDate,
-  formatMatchTime,
-} from "@/lib/match-utils";
+import { formatMatchDate, formatMatchTime } from "@/lib/match-utils";
 import LiveMatch from "./_components/live-match";
 import LiveMatchRefresh from "@/components/public/live-match-refresh";
 
@@ -13,6 +10,16 @@ type Props = {
     slug: string;
     matchId: string;
   }>;
+};
+
+type PublicPlayer = {
+  id: string;
+  firstName: string;
+  lastName: string;
+};
+
+type PublicMatchOnlyPlayer = {
+  name: string;
 };
 
 export default async function PublicMatchPage({ params }: Props) {
@@ -41,8 +48,32 @@ export default async function PublicMatchPage({ params }: Props) {
       awayTeam: true,
       group: true,
       events: {
-        include: {
-          player: true,
+        select: {
+          id: true,
+          type: true,
+          minute: true,
+          addedTime: true,
+          description: true,
+          createdAt: true,
+          player: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          assistedByPlayer: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          assistedByMatchPlayer: {
+            select: {
+              name: true,
+            },
+          },
         },
         orderBy: [
           {
@@ -69,13 +100,9 @@ export default async function PublicMatchPage({ params }: Props) {
       {/* Match meta */}
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="flex flex-wrap items-center justify-center gap-2.5 text-center text-sm text-slate-500">
-          {match.roundNumber !== null && (
-            <span>Round {match.roundNumber}</span>
-          )}
+          {match.roundNumber !== null && <span>Round {match.roundNumber}</span>}
 
-          {match.matchNumber !== null && (
-            <span>Match {match.matchNumber}</span>
-          )}
+          {match.matchNumber !== null && <span>Match {match.matchNumber}</span>}
 
           {match.group && <span>{match.group.name}</span>}
         </div>
@@ -119,20 +146,29 @@ export default async function PublicMatchPage({ params }: Props) {
               name: match.awayTeam.name,
               shortName: match.awayTeam.shortName,
             },
-            events: match.events.map((event) => ({
-              id: event.id,
-              type: event.type,
-              minute: event.minute,
-              addedTime: event.addedTime,
-              description: event.description,
-              player: event.player
-                ? {
-                    id: event.player.id,
-                    firstName: event.player.firstName,
-                    lastName: event.player.lastName,
-                  }
-                : null,
-            })),
+            events: match.events.map((event) => {
+              const assistedByPlayer =
+                event.assistedByPlayer as PublicPlayer | null;
+              const assistedByMatchPlayer =
+                event.assistedByMatchPlayer as PublicMatchOnlyPlayer | null;
+
+              return {
+                id: event.id,
+                type: event.type,
+                minute: event.minute,
+                addedTime: event.addedTime,
+                description: event.description,
+                player: event.player
+                  ? {
+                      id: event.player.id,
+                      firstName: event.player.firstName,
+                      lastName: event.player.lastName,
+                    }
+                  : null,
+                assistedByPlayer,
+                assistedByMatchPlayer,
+              };
+            }),
           }}
         />
       </div>

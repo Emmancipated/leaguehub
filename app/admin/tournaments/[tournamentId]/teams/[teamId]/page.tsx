@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import TeamNameEditor from "./_components/team-name-editor";
 
 type Props = {
   params: Promise<{
@@ -87,6 +88,8 @@ export default async function TeamPage({ params }: Props) {
                   {team.shortName || "No short name"}
                   {team.group ? ` • ${team.group.name}` : ""}
                 </p>
+
+                <TeamNameEditor initialName={team.name} />
               </div>
             </div>
           </div>
