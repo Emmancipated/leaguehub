@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import TeamNameEditor from "./_components/team-name-editor";
+import TeamLogoUploader from "./_components/team-logo-uploader";
 
 type Props = {
   params: Promise<{
@@ -101,6 +102,12 @@ export default async function TeamPage({ params }: Props) {
             Manage Players
           </Link>
         </div>
+
+        <TeamLogoUploader
+          tournamentId={tournamentId}
+          teamId={teamId}
+          initialLogoUrl={team.logoUrl}
+        />
 
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-xl border bg-white p-5">
