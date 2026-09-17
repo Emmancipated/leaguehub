@@ -13,7 +13,7 @@ type Props = {
 
 function positionClasses(position: number) {
   return position <= 3
-    ? "bg-indigo-500/15 text-indigo-600"
+    ? "bg-[#ef806d]/15 text-[#c85d4e]"
     : "text-slate-400";
 }
 
@@ -64,7 +64,7 @@ export default async function PublicStandingsPage({ params }: Props) {
 
           <Link
             href={`/tournaments/${tournament.slug}/fixtures`}
-            className="inline-flex items-center gap-1 text-sm font-semibold text-slate-700 transition hover:text-indigo-600"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-slate-700 transition hover:text-[#c85d4e]"
           >
             View fixtures
             <ChevronRight className="h-4 w-4" />
@@ -100,7 +100,7 @@ export default async function PublicStandingsPage({ params }: Props) {
                     <th className="px-4 py-3.5 text-center">GF</th>
                     <th className="px-4 py-3.5 text-center">GA</th>
                     <th className="px-4 py-3.5 text-center">GD</th>
-                    <th className="px-4 py-3.5 text-center font-bold text-indigo-600">
+                    <th className="px-4 py-3.5 text-center font-bold text-[#c85d4e]">
                       Pts
                     </th>
                   </tr>
@@ -195,7 +195,7 @@ export default async function PublicStandingsPage({ params }: Props) {
                         </span>
                       </div>
 
-                      <span className="font-bold text-indigo-600">
+                      <span className="font-bold text-[#c85d4e]">
                         Pts {team.points}
                       </span>
                     </div>

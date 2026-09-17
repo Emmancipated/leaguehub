@@ -94,12 +94,12 @@ export default async function PublicTeamsPage({ params }: Props) {
                 href={`/tournaments/${tournament.slug}/teams/${team.id}`}
                 className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:bg-slate-50 hover:shadow-md"
               >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-xl font-bold text-indigo-600">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#fff0ed] text-xl font-bold text-[#c85d4e]">
                   {initials}
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h2 className="font-bold text-slate-900 group-hover:text-indigo-600">
+                  <h2 className="font-bold text-slate-900 group-hover:text-[#c85d4e]">
                     {team.name}
                   </h2>
 
