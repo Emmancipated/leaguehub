@@ -310,10 +310,18 @@ export default async function PublicFixturesPage({ params }: Props) {
                       </span>
 
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-600 sm:h-10 sm:w-10 sm:text-xs">
-                        {match.homeTeam.shortName
-                          ?.slice(0, 3)
-                          .toUpperCase() ??
-                          match.homeTeam.name.slice(0, 2).toUpperCase()}
+                        {match.homeTeam.logoUrl ? (
+                          <img
+                            src={match.homeTeam.logoUrl}
+                            alt={match.homeTeam.name}
+                            className="h-full w-full rounded-full object-cover"
+                          />
+                        ) : (
+                          match.homeTeam.shortName
+                            ?.slice(0, 3)
+                            .toUpperCase() ??
+                            match.homeTeam.name.slice(0, 2).toUpperCase()
+                        )}
                       </div>
                     </div>
 
@@ -368,10 +376,18 @@ export default async function PublicFixturesPage({ params }: Props) {
                     {/* Away */}
                     <div className="flex min-w-0 items-center gap-2 sm:gap-3">
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-600 sm:h-10 sm:w-10 sm:text-xs">
-                        {match.awayTeam.shortName
-                          ?.slice(0, 3)
-                          .toUpperCase() ??
-                          match.awayTeam.name.slice(0, 2).toUpperCase()}
+                        {match.awayTeam.logoUrl ? (
+                          <img
+                            src={match.awayTeam.logoUrl}
+                            alt={match.awayTeam.name}
+                            className="h-full w-full rounded-full object-cover"
+                          />
+                        ) : (
+                          match.awayTeam.shortName
+                            ?.slice(0, 3)
+                            .toUpperCase() ??
+                            match.awayTeam.name.slice(0, 2).toUpperCase()
+                        )}
                       </div>
 
                       <span className="min-w-0 whitespace-normal break-words text-[13px] font-semibold leading-5 text-slate-900 sm:text-base">
