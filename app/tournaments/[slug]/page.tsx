@@ -105,7 +105,6 @@ export default async function PublicTournamentPage({ params }: Props) {
             matchNumber: "asc",
           },
         ],
-        take: 6,
       },
     },
   });
@@ -125,6 +124,8 @@ export default async function PublicTournamentPage({ params }: Props) {
   const upcomingMatches = tournament.matches.filter(
     (match) => match.status === "SCHEDULED" || match.status === "POSTPONED",
   );
+
+  const displayedMatches = tournament.matches.slice(0, 6);
 
   const format =
     tournament.settings?.competitionFormat === "LEAGUE"
@@ -346,7 +347,7 @@ export default async function PublicTournamentPage({ params }: Props) {
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {tournament.matches.map((match) => (
+              {displayedMatches.map((match) => (
                 <Link
                   key={match.id}
                   href={`/tournaments/${tournament.slug}/matches/${match.id}`}
