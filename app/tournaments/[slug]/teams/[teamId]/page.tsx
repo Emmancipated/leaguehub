@@ -77,7 +77,7 @@ export default async function PublicTeamPage({ params }: Props) {
       {/* Team header */}
       <div className="flex flex-col gap-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-8">
         <div className="flex items-center gap-5">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-3xl font-bold text-indigo-600">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#fff0ed] text-3xl font-bold text-[#c85d4e]">
             {team.shortName
               ? team.shortName.slice(0, 3).toUpperCase()
               : team.name.slice(0, 2).toUpperCase()}
@@ -106,7 +106,7 @@ export default async function PublicTeamPage({ params }: Props) {
 
         <Link
           href={`/tournaments/${tournament.slug}/teams`}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 transition hover:text-indigo-600"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 transition hover:text-[#c85d4e]"
         >
           <ChevronLeft className="h-4 w-4" />
           Back to teams

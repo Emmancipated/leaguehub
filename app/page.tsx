@@ -99,10 +99,7 @@ async function getPublicTournaments() {
       where: {
         status: { in: PUBLIC_STATUSES },
       },
-      orderBy: [
-        { startDate: "desc" },
-        { createdAt: "desc" },
-      ],
+      orderBy: [{ startDate: "desc" }, { createdAt: "desc" }],
       take: 9,
       select: {
         id: true,
@@ -147,12 +144,12 @@ export default async function LandingPage() {
             </Link>
 
             <nav className="flex items-center gap-6 text-sm font-medium">
-              <Link
+              {/* <Link
                 href="#tournaments"
                 className="text-slate-600 transition hover:text-slate-950"
               >
                 Browse
-              </Link>
+              </Link> */}
 
               <Link
                 href="#features"
@@ -165,7 +162,7 @@ export default async function LandingPage() {
                 href="/login"
                 className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               >
-                Organizer Sign In
+                Admin Login
               </Link>
             </nav>
           </div>
@@ -182,8 +179,8 @@ export default async function LandingPage() {
               </h1>
 
               <p className="mt-5 text-lg text-slate-600">
-                Browse public competitions, follow live scores, check the
-                latest results and stay updated with the league table.
+                Browse public competitions, follow live scores, check the latest
+                results and stay updated with the league table.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">

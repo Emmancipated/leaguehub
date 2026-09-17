@@ -63,6 +63,20 @@ function getStatusClasses(status: string) {
   }
 }
 
+function getScoreClasses(homeScore: number, awayScore: number) {
+  if (homeScore === awayScore) {
+    return {
+      home: "text-slate-950",
+      away: "text-slate-950",
+    };
+  }
+
+  return {
+    home: homeScore > awayScore ? "text-emerald-600" : "text-rose-600",
+    away: awayScore > homeScore ? "text-emerald-600" : "text-rose-600",
+  };
+}
+
 export default async function PublicFixturesPage({ params }: Props) {
   const { slug } = await params;
 
@@ -265,7 +279,7 @@ export default async function PublicFixturesPage({ params }: Props) {
                 <Link
                   key={match.id}
                   href={`/tournaments/${tournament.slug}/matches/${match.id}`}
-                  className="group block px-5 py-5 transition hover:bg-slate-50 sm:px-6"
+                  className="group block px-3 py-5 transition hover:bg-slate-50 sm:px-6"
                 >
                   {/* Match meta */}
                   <div className="mb-3 flex items-center justify-between text-xs text-slate-400">
@@ -288,14 +302,14 @@ export default async function PublicFixturesPage({ params }: Props) {
                   </div>
 
                   {/* Teams / score */}
-                  <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+                  <div className="mt-5 grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4">
                     {/* Home */}
-                    <div className="flex min-w-0 items-center justify-end gap-3">
-                      <span className="truncate text-right text-sm font-semibold text-slate-900 sm:text-base">
+                    <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-3">
+                      <span className="min-w-0 whitespace-normal break-words text-right text-[13px] font-semibold leading-5 text-slate-900 sm:text-base">
                         {match.homeTeam.name}
                       </span>
 
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-600 sm:h-10 sm:w-10 sm:text-xs">
                         {match.homeTeam.shortName
                           ?.slice(0, 3)
                           .toUpperCase() ??
@@ -304,11 +318,30 @@ export default async function PublicFixturesPage({ params }: Props) {
                     </div>
 
                     {/* Score */}
-                    <div className="min-w-[72px] text-center">
+                    <div className="min-w-[60px] text-center sm:min-w-[72px]">
                       {isCompleted || isLive ? (
                         <div>
-                          <div className="text-xl font-bold tracking-tight text-slate-950">
-                            {match.homeScore} - {match.awayScore}
+                          <div className="text-xl font-bold tracking-tight">
+                            {(() => {
+                              const scoreClasses = getScoreClasses(
+                                match.homeScore,
+                                match.awayScore,
+                              );
+
+                              return (
+                                <>
+                                  <span className={scoreClasses.home}>
+                                    {match.homeScore}
+                                  </span>
+                                  <span className="mx-1 text-slate-400 sm:mx-2">
+                                    -
+                                  </span>
+                                  <span className={scoreClasses.away}>
+                                    {match.awayScore}
+                                  </span>
+                                </>
+                              );
+                            })()}
                           </div>
 
                           {isLive && (
@@ -333,15 +366,15 @@ export default async function PublicFixturesPage({ params }: Props) {
                     </div>
 
                     {/* Away */}
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">
+                    <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-600 sm:h-10 sm:w-10 sm:text-xs">
                         {match.awayTeam.shortName
                           ?.slice(0, 3)
                           .toUpperCase() ??
                           match.awayTeam.name.slice(0, 2).toUpperCase()}
                       </div>
 
-                      <span className="truncate text-sm font-semibold text-slate-900 sm:text-base">
+                      <span className="min-w-0 whitespace-normal break-words text-[13px] font-semibold leading-5 text-slate-900 sm:text-base">
                         {match.awayTeam.name}
                       </span>
                     </div>

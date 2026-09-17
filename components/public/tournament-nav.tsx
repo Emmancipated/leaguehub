@@ -35,9 +35,12 @@ export function TournamentNav({ slug }: TournamentNavProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <nav
+      aria-label="Tournament navigation"
+      className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 shadow-[0_4px_18px_rgba(16,42,67,0.06)] backdrop-blur"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex overflow-x-auto">
+        <div className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {navigation.map((item) => {
             const href = `/tournaments/${slug}${item.path}`;
 
@@ -52,10 +55,11 @@ export function TournamentNav({ slug }: TournamentNavProps) {
               <Link
                 key={item.label}
                 href={href}
-                className={`relative flex shrink-0 items-center gap-2 px-4 py-4 text-sm font-semibold transition sm:px-5 ${
+                aria-current={isActive ? "page" : undefined}
+                className={`relative flex shrink-0 items-center gap-2 px-3 py-3.5 text-sm font-semibold transition sm:px-5 ${
                   isActive
-                    ? "text-slate-950"
-                    : "text-slate-500 hover:text-slate-900"
+                    ? "text-[#102a43]"
+                    : "text-slate-500 hover:text-[#102a43]"
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -63,7 +67,7 @@ export function TournamentNav({ slug }: TournamentNavProps) {
                 {item.label}
 
                 {isActive && (
-                  <span className="absolute inset-x-4 bottom-0 h-0.5 rounded-full bg-slate-950 sm:inset-x-5" />
+                  <span className="absolute inset-x-3 bottom-0 h-1 rounded-t-full bg-[#ef806d] sm:inset-x-5" />
                 )}
               </Link>
             );

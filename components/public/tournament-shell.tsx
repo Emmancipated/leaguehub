@@ -20,12 +20,12 @@ export function TournamentShell({
   children,
 }: TournamentShellProps) {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950">
+    <div className="min-h-screen bg-[#f4f7f8] text-[#102a43]">
       <TournamentHeader tournament={tournament} />
 
       <TournamentNav slug={tournament.slug} />
 
-      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
         {children}
       </main>
     </div>

@@ -56,6 +56,20 @@ function getMatchStatusLabel(status: string) {
   }
 }
 
+function getScoreClasses(homeScore: number, awayScore: number) {
+  if (homeScore === awayScore) {
+    return {
+      home: "text-slate-950",
+      away: "text-slate-950",
+    };
+  }
+
+  return {
+    home: homeScore > awayScore ? "text-emerald-600" : "text-rose-600",
+    away: awayScore > homeScore ? "text-emerald-600" : "text-rose-600",
+  };
+}
+
 export default async function PublicTournamentPage({ params }: Props) {
   const { slug } = await params;
 
@@ -265,8 +279,25 @@ export default async function PublicTournamentPage({ params }: Props) {
                     {match.homeTeam.name}
                   </p>
 
-                  <div className="rounded-xl bg-slate-950 px-4 py-2 text-lg font-bold text-white">
-                    {match.homeScore} - {match.awayScore}
+                  <div className="rounded-xl bg-slate-100 px-4 py-2 text-lg font-bold">
+                    {(() => {
+                      const scoreClasses = getScoreClasses(
+                        match.homeScore,
+                        match.awayScore,
+                      );
+
+                      return (
+                        <>
+                          <span className={scoreClasses.home}>
+                            {match.homeScore}
+                          </span>
+                          <span className="mx-1 text-slate-500">-</span>
+                          <span className={scoreClasses.away}>
+                            {match.awayScore}
+                          </span>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   <p className="text-sm font-semibold text-slate-900">
@@ -353,8 +384,25 @@ export default async function PublicTournamentPage({ params }: Props) {
                           VS
                         </span>
                       ) : (
-                        <span className="text-lg font-bold text-slate-950">
-                          {match.homeScore} - {match.awayScore}
+                        <span className="text-lg font-bold">
+                          {(() => {
+                            const scoreClasses = getScoreClasses(
+                              match.homeScore,
+                              match.awayScore,
+                            );
+
+                            return (
+                              <>
+                                <span className={scoreClasses.home}>
+                                  {match.homeScore}
+                                </span>
+                                <span className="mx-1 text-slate-400">-</span>
+                                <span className={scoreClasses.away}>
+                                  {match.awayScore}
+                                </span>
+                              </>
+                            );
+                          })()}
                         </span>
                       )}
                     </div>

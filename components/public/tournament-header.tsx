@@ -61,25 +61,35 @@ export function TournamentHeader({ tournament }: TournamentHeaderProps) {
   const endDate = formatDate(tournament.endDate);
 
   return (
-    <header className="border-b border-slate-200 bg-white">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex min-h-[180px] flex-col justify-between gap-6 py-7 sm:flex-row sm:items-end sm:py-8">
-          <div className="min-w-0">
+    <header className="relative overflow-hidden bg-[#102a43] text-white">
+      <div className="absolute inset-y-0 right-0 w-1/2 bg-[#1f4e68] opacity-40 [clip-path:polygon(30%_0,100%_0,100%_100%,0_100%)]" />
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex min-h-[220px] flex-col justify-between gap-8 py-6 sm:py-8">
+          <div className="flex items-center justify-between">
             <Link
               href="/"
-              className="mb-5 inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-950"
+              className="inline-flex items-center gap-2 text-sm font-semibold tracking-tight text-white/80 transition hover:text-white"
             >
-              <Trophy className="h-4 w-4" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f6b4a6] text-[#102a43]">
+                <Trophy className="h-4 w-4" />
+              </span>
               LeagueHub
             </Link>
 
+            <span className="hidden text-xs font-semibold uppercase tracking-[0.2em] text-white/45 sm:block">
+              Official tournament hub
+            </span>
+          </div>
+
+          <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+              <h1 className="max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-5xl">
                 {tournament.name}
               </h1>
 
               <span
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ${getStatusClasses(
+                className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ring-inset ${getStatusClasses(
                   tournament.status,
                 )}`}
               >
@@ -92,13 +102,13 @@ export function TournamentHeader({ tournament }: TournamentHeaderProps) {
             </div>
 
             {tournament.description && (
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70 sm:text-base">
                 {tournament.description}
               </p>
             )}
 
             {(startDate || endDate) && (
-              <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-white/60">
                 <CalendarDays className="h-4 w-4" />
 
                 <span>
@@ -111,18 +121,6 @@ export function TournamentHeader({ tournament }: TournamentHeaderProps) {
               </div>
             )}
           </div>
-
-          {/* <div className="hidden shrink-0 sm:block">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Tournament
-              </p>
-
-              <p className="mt-1 text-sm font-semibold text-slate-900">
-                Official Competition
-              </p>
-            </div>
-          </div> */}
         </div>
       </div>
     </header>
