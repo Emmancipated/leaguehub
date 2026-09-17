@@ -38,6 +38,7 @@ export default async function PublicTeamsPage({ params }: Props) {
       id: true,
       name: true,
       shortName: true,
+      logoUrl: true,
       _count: {
         select: {
           players: true,
@@ -95,7 +96,15 @@ export default async function PublicTeamsPage({ params }: Props) {
                 className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:bg-slate-50 hover:shadow-md"
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#fff0ed] text-xl font-bold text-[#c85d4e]">
-                  {initials}
+                  {team.logoUrl ? (
+                    <img
+                      src={team.logoUrl}
+                      alt={team.name}
+                      className="h-full w-full rounded-xl object-cover"
+                    />
+                  ) : (
+                    initials
+                  )}
                 </div>
 
                 <div className="min-w-0 flex-1">

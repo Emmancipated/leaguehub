@@ -458,8 +458,16 @@ export default async function PublicTournamentPage({ params }: Props) {
                   className="flex items-center gap-3 px-5 py-3.5 transition hover:bg-slate-50"
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">
-                    {team.shortName?.slice(0, 3).toUpperCase() ??
-                      team.name.slice(0, 2).toUpperCase()}
+                    {team.logoUrl ? (
+                      <img
+                        src={team.logoUrl}
+                        alt={team.name}
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    ) : (
+                      team.shortName?.slice(0, 3).toUpperCase() ??
+                        team.name.slice(0, 2).toUpperCase()
+                    )}
                   </div>
 
                   <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-900">
