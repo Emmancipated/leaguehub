@@ -33,6 +33,7 @@ type MatchEvent = {
   player: Player | null;
   assistedByPlayer: Player | null;
   assistedByMatchPlayer: { name: string } | null;
+  matchPlayer: { id: string; name: string } | null;
   team?: Team | null;
 };
 
@@ -85,9 +86,13 @@ function isCardEvent(event: MatchEvent): boolean {
 }
 
 function eventPlayerName(event: MatchEvent): string {
-  if (!event.player) return "";
-
-  return `${event.player.firstName} ${event.player.lastName}`;
+  if (event.player) {
+    return `${event.player.firstName} ${event.player.lastName}`;
+  }
+  if (event.matchPlayer) {
+    return event.matchPlayer.name;
+  }
+  return "";
 }
 
 function getEventTeamId(
