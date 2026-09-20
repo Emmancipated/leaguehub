@@ -227,9 +227,7 @@ export default async function PublicTournamentPage({ params }: Props) {
               <Shield className="h-5 w-5 text-slate-700" />
             </div>
 
-            <span className="text-xs font-medium text-slate-400">
-              Schedule
-            </span>
+            <span className="text-xs font-medium text-slate-400">Schedule</span>
           </div>
 
           <p className="mt-5 text-3xl font-bold tracking-tight">
@@ -356,15 +354,12 @@ export default async function PublicTournamentPage({ params }: Props) {
                   <div className="mb-3 flex items-center justify-between text-xs text-slate-400">
                     <span>
                       Round {match.roundNumber ?? "—"}
-                      {match.matchNumber
-                        ? ` • Match ${match.matchNumber}`
-                        : ""}
+                      {match.matchNumber ? ` • Match ${match.matchNumber}` : ""}
                     </span>
 
                     <span
                       className={
-                        match.status === "LIVE" ||
-                        match.status === "HALF_TIME"
+                        match.status === "LIVE" || match.status === "HALF_TIME"
                           ? "font-semibold text-red-600"
                           : "font-medium"
                       }
@@ -378,7 +373,7 @@ export default async function PublicTournamentPage({ params }: Props) {
                       {match.homeTeam.name}
                     </p>
 
-                    <div className="min-w-[76px] text-center">
+                    <div className="min-w-19 text-center">
                       {match.status === "SCHEDULED" ||
                       match.status === "POSTPONED" ? (
                         <span className="text-sm font-semibold text-slate-400">
@@ -430,9 +425,7 @@ export default async function PublicTournamentPage({ params }: Props) {
             <div>
               <h2 className="font-semibold text-slate-950">Teams</h2>
 
-              <p className="mt-1 text-sm text-slate-500">
-                Participating teams
-              </p>
+              <p className="mt-1 text-sm text-slate-500">Participating teams</p>
             </div>
 
             <Link
@@ -445,9 +438,7 @@ export default async function PublicTournamentPage({ params }: Props) {
 
           {tournament.teams.length === 0 ? (
             <div className="px-5 py-8">
-              <p className="text-sm text-slate-500">
-                No teams registered yet.
-              </p>
+              <p className="text-sm text-slate-500">No teams registered yet.</p>
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
@@ -465,8 +456,8 @@ export default async function PublicTournamentPage({ params }: Props) {
                         className="h-full w-full rounded-full object-cover"
                       />
                     ) : (
-                      team.shortName?.slice(0, 3).toUpperCase() ??
-                        team.name.slice(0, 2).toUpperCase()
+                      (team.shortName?.slice(0, 3).toUpperCase() ??
+                      team.name.slice(0, 2).toUpperCase())
                     )}
                   </div>
 
@@ -485,9 +476,7 @@ export default async function PublicTournamentPage({ params }: Props) {
       {/* Tournament dates */}
       <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 px-5 py-5 sm:px-6">
-          <h2 className="font-semibold text-slate-950">
-            Tournament schedule
-          </h2>
+          <h2 className="font-semibold text-slate-950">Tournament schedule</h2>
 
           <p className="mt-1 text-sm text-slate-500">Competition timeline</p>
         </div>
