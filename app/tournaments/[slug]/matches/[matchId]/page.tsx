@@ -74,6 +74,14 @@ export default async function PublicMatchPage({ params }: Props) {
               name: true,
             },
           },
+          team: {
+            select: {
+              id: true,
+              name: true,
+              shortName: true,
+              logoUrl: true,
+            },
+          },
         },
         orderBy: [
           {
@@ -140,11 +148,13 @@ export default async function PublicMatchPage({ params }: Props) {
               id: match.homeTeam.id,
               name: match.homeTeam.name,
               shortName: match.homeTeam.shortName,
+              logoUrl: match.homeTeam.logoUrl,
             },
             awayTeam: {
               id: match.awayTeam.id,
               name: match.awayTeam.name,
               shortName: match.awayTeam.shortName,
+              logoUrl: match.awayTeam.logoUrl,
             },
             events: match.events.map((event) => {
               const assistedByPlayer =
@@ -167,6 +177,7 @@ export default async function PublicMatchPage({ params }: Props) {
                   : null,
                 assistedByPlayer,
                 assistedByMatchPlayer,
+                team: event.team,
               };
             }),
           }}

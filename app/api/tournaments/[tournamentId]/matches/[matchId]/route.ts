@@ -69,6 +69,14 @@ export async function GET(_request: NextRequest, { params }: Params) {
             player: true,
             assistedByPlayer: true,
             assistedByMatchPlayer: true,
+            team: {
+              select: {
+                id: true,
+                name: true,
+                shortName: true,
+                logoUrl: true,
+              },
+            },
           },
           orderBy: [
             {
