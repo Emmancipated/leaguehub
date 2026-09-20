@@ -1,397 +1,8 @@
-// "use client";
-
-// import { useEffect, useState } from "react";
-// import {
-//   matchStatusClasses,
-//   matchStatusLabel,
-//   teamInitials,
-//   eventIcon,
-//   eventLabel,
-// } from "@/lib/match-utils";
-
-// type Team = {
-//   id: string;
-//   name: string;
-//   shortName?: string | null;
-//   logoUrl?: string | null;
-// };
-
-// type Player = {
-//   id: string;
-//   firstName: string;
-//   lastName: string;
-// };
-
-// type MatchEvent = {
-//   id: string;
-//   type: string;
-//   minute: number | null;
-//   addedTime: number | null;
-//   description: string | null;
-//   player: Player | null;
-//   assistedByPlayer: Player | null;
-//   assistedByMatchPlayer: { name: string } | null;
-//   team?: Team | null;
-// };
-
-// type MatchData = {
-//   id: string;
-//   status: string;
-//   homeScore: number;
-//   awayScore: number;
-//   homeTeam: Team;
-//   awayTeam: Team;
-//   events: MatchEvent[];
-// };
-
-// type Props = {
-//   tournamentId: string;
-//   matchId: string;
-//   initialMatch: MatchData;
-// };
-
-// function minuteLabel(minute: number | null, addedTime: number | null): string {
-//   if (minute === null) return "—";
-//   return `${minute}'${addedTime ? `+${addedTime}` : ""}`;
-// }
-
-// function eventItem(event: MatchEvent) {
-//   const m = minuteLabel(event.minute, event.addedTime);
-
-//   return (
-//     <div key={event.id} className="flex items-start gap-2 py-1">
-//       <span className="mt-0.5 shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-xs font-bold text-slate-700">
-//         {m}
-//       </span>
-//       <div className="min-w-0">
-//         <p className="text-sm text-slate-900">
-//           {eventIcon(event.type)} {eventLabel(event.type)}
-//         </p>
-//         {event.player && (
-//           <p className="text-xs text-slate-500">
-//             {event.player.firstName} {event.player.lastName}
-//           </p>
-//         )}
-//         {event.assistedByPlayer && (
-//           <p className="text-xs text-slate-400">
-//             Assist: {event.assistedByPlayer.firstName}{" "}
-//             {event.assistedByPlayer.lastName}
-//           </p>
-//         )}
-//         {event.description && (
-//           <p className="text-xs text-slate-400">{event.description}</p>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-
-// function TeamColumn({
-//   label,
-//   team,
-//   events,
-// }: {
-//   label: string;
-//   team: Team | null;
-//   events: MatchEvent[];
-// }) {
-//   return (
-//     <div className="rounded-xl border border-slate-200 bg-white p-3">
-//       <div className="mb-2 flex items-center gap-2 border-b border-slate-100 pb-2">
-//         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">
-//           {team ? (
-//             team.logoUrl ? (
-//               <img
-//                 src={team.logoUrl}
-//                 alt={team.name}
-//                 className="h-full w-full rounded-full object-cover"
-//               />
-//             ) : (
-//               teamInitials(team.name, team.shortName)
-//             )
-//           ) : (
-//             "•"
-//           )}
-//         </div>
-//         <span className="font-semibold text-sm text-slate-900">{label}</span>
-//       </div>
-//       {events.length === 0 ? (
-//         <p className="py-4 text-center text-xs text-slate-400">No events</p>
-//       ) : (
-//         events.map(eventItem)
-//       )}
-//     </div>
-//   );
-// }
-
-// export default function LiveMatch({
-//   tournamentId,
-//   matchId,
-//   initialMatch,
-// }: Props) {
-//   const [match, setMatch] = useState(initialMatch);
-//   const [isRefreshing, setIsRefreshing] = useState(false);
-
-//   useEffect(() => {
-//     if (match.status !== "LIVE") {
-//       return;
-//     }
-
-//     let cancelled = false;
-
-//     async function refreshMatch() {
-//       try {
-//         setIsRefreshing(true);
-
-//         const response = await fetch(
-//           `/api/tournaments/${tournamentId}/matches/${matchId}`,
-//           {
-//             method: "GET",
-//             cache: "no-store",
-//           },
-//         );
-
-//         if (!response.ok) {
-//           return;
-//         }
-
-//         const data = await response.json();
-
-//         if (!cancelled) {
-//           setMatch(data);
-//         }
-//       } catch {
-//         // Silently ignore temporary polling failures.
-//       } finally {
-//         if (!cancelled) {
-//           setIsRefreshing(false);
-//         }
-//       }
-//     }
-
-//     const interval = window.setInterval(refreshMatch, 3000);
-
-//     return () => {
-//       cancelled = true;
-//       window.clearInterval(interval);
-//     };
-//   }, [tournamentId, matchId, match.status]);
-
-//   const isLive = match.status === "LIVE";
-//   const isFinished = match.status === "COMPLETED";
-
-//   const showScore = !(
-//     match.status === "SCHEDULED" || match.status === "POSTPONED"
-//   );
-
-//   const scoreClasses =
-//     match.homeScore > match.awayScore
-//       ? { home: "text-emerald-600", away: "text-rose-600" }
-//       : match.awayScore > match.homeScore
-//         ? { home: "text-rose-600", away: "text-emerald-600" }
-//         : { home: "text-slate-950", away: "text-slate-950" };
-
-//   function getEventTeamId(event: MatchEvent): string | null {
-//     if (event.type === "OWN_GOAL" && event.team) {
-//       if (event.team.id === match.homeTeam.id) return match.awayTeam.id;
-//       if (event.team.id === match.awayTeam.id) return match.homeTeam.id;
-//     }
-
-//     return event.team?.id ?? null;
-//   }
-
-//   const homeEvents = match.events.filter(
-//     (e) => getEventTeamId(e) === match.homeTeam.id,
-//   );
-//   const awayEvents = match.events.filter(
-//     (e) => getEventTeamId(e) === match.awayTeam.id,
-//   );
-//   const neutralEvents = match.events.filter(
-//     (e) => !homeEvents.includes(e) && !awayEvents.includes(e),
-//   );
-
-//   return (
-//     <>
-//       {/* Scoreboard */}
-//       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-//         <div className="flex flex-wrap items-center justify-center gap-3 text-center">
-//           <span
-//             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${matchStatusClasses(
-//               match.status,
-//             )}`}
-//           >
-//             {isLive && (
-//               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
-//             )}
-
-//             {matchStatusLabel(match.status)}
-//           </span>
-//         </div>
-
-//         <div className="mt-6 sm:mt-8 grid grid-cols-[1fr_auto_1fr] items-center gap-5 sm:gap-10">
-//           {/* Home */}
-//           <div className="text-center">
-//             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100 text-xl font-bold text-slate-700 sm:h-24 sm:w-24 sm:text-2xl">
-//               {match.homeTeam.logoUrl ? (
-//                 <img
-//                   src={match.homeTeam.logoUrl}
-//                   alt={match.homeTeam.name}
-//                   className="h-full w-full rounded-2xl object-cover"
-//                 />
-//               ) : (
-//                 teamInitials(match.homeTeam.name, match.homeTeam.shortName)
-//               )}
-//             </div>
-
-//             <p className="mt-4 text-lg font-bold text-slate-950 sm:text-2xl">
-//               {match.homeTeam.name}
-//             </p>
-
-//             <p className="mt-1 text-xs uppercase tracking-wider text-slate-500">
-//               Home
-//             </p>
-//           </div>
-
-//           {/* Score */}
-//           <div className="min-w-25 text-center sm:min-w-37.5">
-//             <div className="text-4xl font-bold tracking-tight text-slate-950 sm:text-6xl">
-//               {showScore ? (
-//                 <>
-//                   <span className={scoreClasses.home}>{match.homeScore}</span>
-//                   <span className="mx-2 text-slate-400">-</span>
-//                   <span className={scoreClasses.away}>{match.awayScore}</span>
-//                 </>
-//               ) : (
-//                 <span className="text-slate-400">VS</span>
-//               )}
-//             </div>
-
-//             {isLive && (
-//               <p className="mt-3 text-sm font-semibold text-red-600">LIVE</p>
-//             )}
-
-//             {match.status === "HALF_TIME" && (
-//               <p className="mt-3 text-sm font-semibold text-amber-600">
-//                 HALF TIME
-//               </p>
-//             )}
-
-//             {isFinished && (
-//               <p className="mt-3 text-sm font-semibold text-emerald-600">
-//                 FULL TIME
-//               </p>
-//             )}
-
-//             {isLive && isRefreshing && (
-//               <p className="mt-2 text-xs text-slate-400">Updating…</p>
-//             )}
-//           </div>
-
-//           {/* Away */}
-//           <div className="text-center">
-//             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100 text-xl font-bold text-slate-700 sm:h-24 sm:w-24 sm:text-2xl">
-//               {match.awayTeam.logoUrl ? (
-//                 <img
-//                   src={match.awayTeam.logoUrl}
-//                   alt={match.awayTeam.name}
-//                   className="h-full w-full rounded-2xl object-cover"
-//                 />
-//               ) : (
-//                 teamInitials(match.awayTeam.name, match.awayTeam.shortName)
-//               )}
-//             </div>
-
-//             <p className="mt-4 text-lg font-bold text-slate-950 sm:text-2xl">
-//               {match.awayTeam.name}
-//             </p>
-
-//             <p className="mt-1 text-xs uppercase tracking-wider text-slate-500">
-//               Away
-//             </p>
-//           </div>
-//         </div>
-//       </section>
-
-//       {/* Events */}
-//       <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-//         <div className="border-b border-slate-100 px-5 py-5 sm:px-6">
-//           <div className="flex items-center justify-between">
-//             <div>
-//               <h2 className="font-semibold text-slate-950">Match Events</h2>
-
-//               <p className="mt-1 text-sm text-slate-500">
-//                 Goals, cards and other events
-//               </p>
-//             </div>
-
-//             {isLive && (
-//               <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700">
-//                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-600" />
-//                 LIVE
-//               </span>
-//             )}
-//           </div>
-//         </div>
-
-//         {match.events.length === 0 ? (
-//           <div className="px-5 py-14 text-center">
-//             <p className="text-sm font-medium text-slate-700">
-//               {isLive ? "No events recorded yet" : "No match events"}
-//             </p>
-
-//             <p className="mt-1 text-sm text-slate-500">
-//               {isLive
-//                 ? "Match events will appear here as they happen."
-//                 : "No events have been recorded for this match."}
-//             </p>
-//           </div>
-//         ) : (
-//           <div
-//             className={`grid gap-3 p-5 ${
-//               neutralEvents.length > 0 ? "sm:grid-cols-3" : "sm:grid-cols-2"
-//             }`}
-//           >
-//             <TeamColumn
-//               label={match.homeTeam.name}
-//               team={match.homeTeam}
-//               events={homeEvents}
-//             />
-//             {neutralEvents.length > 0 && (
-//               <div className="rounded-xl border border-slate-200 bg-white p-3">
-//                 <div className="mb-2 flex items-center gap-2 border-b border-slate-100 pb-2">
-//                   <span className="font-semibold text-sm text-slate-900">
-//                     Time
-//                   </span>
-//                 </div>
-//                 {neutralEvents.map((event) => (
-//                   <div key={event.id} className="py-1 text-sm font-bold text-slate-700">
-//                     {minuteLabel(event.minute, event.addedTime)}
-//                   </div>
-//                 ))}
-//               </div>
-//             )}
-//             <TeamColumn
-//               label={match.awayTeam.name}
-//               team={match.awayTeam}
-//               events={awayEvents}
-//             />
-//           </div>
-//         )}
-//       </section>
-//     </>
-//   );
-// }
 "use client";
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import {
-  ArrowLeftRight,
-  CircleAlert,
-  CircleX,
-  Goal,
-  RefreshCw,
-} from "lucide-react";
+import { CircleAlert, RefreshCw } from "lucide-react";
 
 import {
   matchStatusClasses,
@@ -631,7 +242,7 @@ function MatchEventIcon({ event }: { event: MatchEvent }) {
         aria-label="Substitution"
       >
         <Image
-          src="/icons8-player-substitution-64.png"
+          src="/icons8-arrows-48.png"
           alt="Substitution"
           width={20}
           height={20}
@@ -647,11 +258,16 @@ function MatchEventIcon({ event }: { event: MatchEvent }) {
   if (type === "PENALTY_MISSED") {
     return (
       <span
-        className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-rose-50 text-rose-600"
+        className="inline-flex h-9 w-9 items-center justify-center"
         title="Penalty Missed"
         aria-label="Penalty Missed"
       >
-        <CircleX className="h-5 w-5" strokeWidth={2.2} />
+        <Image
+          src="/icons8-missed-penalty-30.png"
+          alt="Penalty Missed"
+          width={20}
+          height={20}
+        />
       </span>
     );
   }
@@ -727,7 +343,73 @@ function TimelineEventRow({
   const isGoal = isGoalEvent(event);
   const isCard = isCardEvent(event);
 
+  const isSubstitution = event.type === "SUBSTITUTION";
+  const isPenaltyMissed = event.type === "PENALTY_MISSED";
+
   const label = eventLabel(event.type);
+
+  const awayEventContent =
+    isSubstitution || isPenaltyMissed ? (
+      <>
+        <MatchEventIcon event={event} />
+        <div className="ml-2 min-w-0">
+          <p className="truncate text-sm sm:text-base font-semibold text-slate-800">
+            {playerName}
+          </p>
+          <p className="mt-0.5 truncate text-[10px] text-slate-400">{label}</p>
+        </div>
+      </>
+    ) : (
+      <>
+        {!isGoal && <MatchEventIcon event={event} />}
+        <div className="min-w-0">
+          <p
+            className={`truncate text-sm sm:text-base ${
+              isGoal
+                ? "font-bold text-slate-950"
+                : "font-semibold text-slate-800"
+            }`}
+          >
+            {playerName || label}
+          </p>
+
+          {/* Goal type */}
+          {isGoal && (
+            <p
+              className={`mt-0.5 truncate text-[10px] ${
+                event.type === "OWN_GOAL"
+                  ? "font-medium text-red-600"
+                  : "text-slate-400"
+              }`}
+            >
+              {label}
+            </p>
+          )}
+
+          {/* Assist */}
+          {isGoal && event.assistedByPlayer && (
+            <p className="mt-0.5 truncate text-[10px] text-slate-400">
+              Assist: {event.assistedByPlayer.firstName}{" "}
+              {event.assistedByPlayer.lastName}
+            </p>
+          )}
+
+          {/* Match player assist fallback */}
+          {isGoal && event.assistedByMatchPlayer && !event.assistedByPlayer && (
+            <p className="mt-0.5 truncate text-[10px] text-slate-400">
+              Assist: {event.assistedByMatchPlayer.name}
+            </p>
+          )}
+
+          {/* Event description */}
+          {event.description && (
+            <p className="mt-0.5 truncate text-[10px] text-slate-400">
+              {event.description}
+            </p>
+          )}
+        </div>
+      </>
+    );
 
   return (
     <div className="grid min-h-20.5 grid-cols-[58px_minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 bg-white px-4 sm:grid-cols-[70px_minmax(0,1fr)_110px_minmax(0,1fr)] sm:px-6">
@@ -749,70 +431,77 @@ function TimelineEventRow({
         {isHomeEvent && (
           <div className="flex items-center justify-end gap-3">
             {/* Event information */}
-            <div className="min-w-0">
-              <p
-                className={`truncate text-sm sm:text-base ${
-                  isGoal
-                    ? "font-bold text-slate-950"
-                    : "font-semibold text-slate-800"
-                }`}
-              >
-                {playerName || label}
-              </p>
-
-              {/* Goal type */}
-              {isGoal && (
+            {!isSubstitution && !isPenaltyMissed && (
+              <div className="min-w-0">
                 <p
-                  className={`mt-0.5 truncate text-[10px] ${
-                    event.type === "OWN_GOAL"
-                      ? "font-medium text-red-600"
-                      : "text-slate-400"
+                  className={`truncate text-sm sm:text-base ${
+                    isGoal
+                      ? "font-bold text-slate-950"
+                      : "font-semibold text-slate-800"
                   }`}
                 >
-                  {label}
+                  {playerName || label}
                 </p>
-              )}
 
-              {/* Assist */}
-              {isGoal && event.assistedByPlayer && (
-                <p className="mt-0.5 truncate text-[10px] text-slate-400">
-                  Assist: {event.assistedByPlayer.firstName}{" "}
-                  {event.assistedByPlayer.lastName}
-                </p>
-              )}
-
-              {/* Match player assist fallback */}
-              {isGoal &&
-                event.assistedByMatchPlayer &&
-                !event.assistedByPlayer && (
-                  <p className="mt-0.5 truncate text-[10px] text-slate-400">
-                    Assist: {event.assistedByMatchPlayer.name}
+                {/* Goal type */}
+                {isGoal && (
+                  <p
+                    className={`mt-0.5 truncate text-[10px] ${
+                      event.type === "OWN_GOAL"
+                        ? "font-medium text-red-600"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    {label}
                   </p>
                 )}
 
-              {/* Event description */}
-              {event.description && (
-                <p className="mt-0.5 truncate text-[10px] text-slate-400">
-                  {event.description}
-                </p>
-              )}
-            </div>
+                {/* Assist */}
+                {isGoal && event.assistedByPlayer && (
+                  <p className="mt-0.5 truncate text-[10px] text-slate-400">
+                    Assist: {event.assistedByPlayer.firstName}{" "}
+                    {event.assistedByPlayer.lastName}
+                  </p>
+                )}
+
+                {/* Match player assist fallback */}
+                {isGoal &&
+                  event.assistedByMatchPlayer &&
+                  !event.assistedByPlayer && (
+                    <p className="mt-0.5 truncate text-[10px] text-slate-400">
+                      Assist: {event.assistedByMatchPlayer.name}
+                    </p>
+                  )}
+
+                {/* Event description */}
+                {event.description && (
+                  <p className="mt-0.5 truncate text-[10px] text-slate-400">
+                    {event.description}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Icon for non-goal events */}
             {!isGoal && isCard && <MatchEventIcon event={event} />}
 
-            {!isGoal &&
-              !isCard &&
-              event.type !== "SUBSTITUTION" &&
-              event.type !== "PENALTY_MISSED" && (
-                <MatchEventIcon event={event} />
-              )}
+            {!isGoal && !isCard && !isSubstitution && !isPenaltyMissed && (
+              <MatchEventIcon event={event} />
+            )}
 
-            {!isGoal &&
-              (event.type === "SUBSTITUTION" ||
-                event.type === "PENALTY_MISSED") && (
+            {isSubstitution || isPenaltyMissed ? (
+              <>
+                <div className="min-w-0">
+                  <p className="truncate text-sm sm:text-base font-semibold text-slate-800">
+                    {playerName}
+                  </p>
+                  <p className="mt-0.5 truncate text-[10px] text-slate-400">
+                    {label}
+                  </p>
+                </div>
                 <MatchEventIcon event={event} />
-              )}
+              </>
+            ) : null}
           </div>
         )}
       </div>
@@ -841,59 +530,7 @@ function TimelineEventRow({
 
       <div className="min-w-0 text-left">
         {isAwayEvent && (
-          <div className="flex items-center gap-3">
-            {/* Icon for non-goal events */}
-            {!isGoal && <MatchEventIcon event={event} />}
-
-            <div className="min-w-0">
-              <p
-                className={`truncate text-sm sm:text-base ${
-                  isGoal
-                    ? "font-bold text-slate-950"
-                    : "font-semibold text-slate-800"
-                }`}
-              >
-                {playerName || label}
-              </p>
-
-              {/* Goal type */}
-              {isGoal && (
-                <p
-                  className={`mt-0.5 truncate text-[11px] ${
-                    event.type === "OWN_GOAL"
-                      ? "font-medium text-amber-600"
-                      : "text-slate-400"
-                  }`}
-                >
-                  {label}
-                </p>
-              )}
-
-              {/* Assist */}
-              {isGoal && event.assistedByPlayer && (
-                <p className="mt-0.5 truncate text-[10px] text-slate-400">
-                  Assist: {event.assistedByPlayer.firstName}{" "}
-                  {event.assistedByPlayer.lastName}
-                </p>
-              )}
-
-              {/* Match player assist fallback */}
-              {isGoal &&
-                event.assistedByMatchPlayer &&
-                !event.assistedByPlayer && (
-                  <p className="mt-0.5 truncate text-[10px] text-slate-400">
-                    Assist: {event.assistedByMatchPlayer.name}
-                  </p>
-                )}
-
-              {/* Event description */}
-              {event.description && (
-                <p className="mt-0.5 truncate text-[10px] text-slate-400">
-                  {event.description}
-                </p>
-              )}
-            </div>
-          </div>
+          <div className="flex items-center gap-3">{awayEventContent}</div>
         )}
       </div>
     </div>
