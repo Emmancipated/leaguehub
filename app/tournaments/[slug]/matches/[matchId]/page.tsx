@@ -19,6 +19,7 @@ type PublicPlayer = {
 };
 
 type PublicMatchOnlyPlayer = {
+  id: string;
   name: string;
 };
 
@@ -71,6 +72,12 @@ export default async function PublicMatchPage({ params }: Props) {
           },
           assistedByMatchPlayer: {
             select: {
+              name: true,
+            },
+          },
+          matchPlayer: {
+            select: {
+              id: true,
               name: true,
             },
           },
@@ -161,6 +168,7 @@ export default async function PublicMatchPage({ params }: Props) {
                 event.assistedByPlayer as PublicPlayer | null;
               const assistedByMatchPlayer =
                 event.assistedByMatchPlayer as PublicMatchOnlyPlayer | null;
+              const matchPlayer = event.matchPlayer as PublicMatchOnlyPlayer | null;
 
               return {
                 id: event.id,
@@ -177,6 +185,7 @@ export default async function PublicMatchPage({ params }: Props) {
                   : null,
                 assistedByPlayer,
                 assistedByMatchPlayer,
+                matchPlayer,
                 team: event.team,
               };
             }),
