@@ -122,13 +122,13 @@ export async function POST(request: Request, { params }: Props) {
     }
 
     /*
-     * Goals and own goals need a player so that we can determine
-     * which team should receive the score.
+     * All event types need a player so that we can determine
+     * which team the event belongs to.
      */
-    if ((type === "GOAL" || type === "OWN_GOAL") && !playerTeamId) {
+    if (!playerTeamId) {
       return NextResponse.json(
         {
-          error: "A player must be selected when recording a goal or own goal.",
+          error: "A player must be selected when recording any match event.",
         },
         { status: 400 },
       );

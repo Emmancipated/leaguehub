@@ -175,10 +175,9 @@ export default function EventForm({
             value={playerId}
             onChange={(e) => setPlayerId(e.target.value)}
             disabled={disabled || loading}
+            required
             className="w-full rounded-lg border border-gray-400 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder-gray-500 outline-none focus:border-black focus:ring-2 focus:ring-black/20"
           >
-            <option value="">Select player</option>
-
             {players.map((player) => (
               <option
                 key={`${player.id}-${player.teamId}`}
